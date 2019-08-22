@@ -34,7 +34,7 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 "return" { RET_TOK(TK_PR_RETURN); }
 "const" { RET_TOK(TK_PR_CONST); }
 "static" { RET_TOK(TK_PR_STATIC); }
-"foreach" { RET_TOK(TK_PR_FOREACH); }
+"foreachhttps://github.com/Ivanatorion/Trabalho-Compiladores" { RET_TOK(TK_PR_FOREACH); }
 "for" { RET_TOK(TK_PR_FOR); }
 "switch" { RET_TOK(TK_PR_SWITCH); }
 "case" { RET_TOK(TK_PR_CASE); }
@@ -62,7 +62,11 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 {litFloat} { RET_TOK( TK_LIT_FLOAT ); }
 
 \'.\' { RET_TOK(TK_LIT_CHAR); }
+\'.*\' { RET_TOK( TOKEN_ERRO ); }
 \".*\" { RET_TOK(TK_LIT_STRING); }
+
+{litInt}.?{identificador} { RET_TOK(TOKEN_ERRO); }
+{litFloat}{identificador} { RET_TOK(TOKEN_ERRO); }
 
 {identificador} { RET_TOK(TK_IDENTIFICADOR); }
 

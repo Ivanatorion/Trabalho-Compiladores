@@ -7,6 +7,11 @@ Nada disso deve tar pegando... */
 
 bool c = true;
 
+int 2.2cc = 90 + 45;
+float 4.aa = 30.4e+10;
+
+char abc = "ab  ; .  A990k";
+
 for (i = 1; i < 4; i = i + 1){
   if(i < 3)
     b = false;
