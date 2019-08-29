@@ -50,14 +50,60 @@ void yyerror (char const *s);
 %token TK_LIT_STRING
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
-%start decl
-
+%start programa
 %%
 
-decl : TK_PR_IF { printf("AAWAWA"); }
+programa: declVarGlobal programa;
+programa: declFunc programa;
+programa: ;
+
+
+
+declVarGlobal: TK_IDENTIFICADOR staticType ';'
+|        TK_IDENTIFICADOR '[' TK_LIT_INT ']' staticType ';';
+
+staticType: TK_PR_STATIC primType
+|            primType;
+
+primType: TK_PR_INT | TK_PR_CHAR | TK_PR_BOOL
+| TK_PR_STRING | TK_PR_FLOAT;
+
+
+
+declFunc: staticType TK_IDENTIFICADOR '(' listaArgs ')' blocoComando;
+
+listaArgs: argumento
+|          argumento ',' listaArgs
+| ;
+
+blocoComando: '{' listaComandos '}'
+
+argumento: TK_PR_CONST primType TK_IDENTIFICADOR
+|          primType TK_IDENTIFICADOR;
+
+listaComandos: comando listaComandos
+| ;
+
+comando: blocoComando
+|        declVarLocal;
+
+declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';'
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';';
+
+literal: TK_LIT_INT
+|        TK_LIT_CHAR
+|        TK_LIT_TRUE
+|        TK_LIT_FALSE
+|        TK_LIT_FLOAT
+|        TK_LIT_STRING;
+
+tipoVarLocal: primType
+|             TK_PR_STATIC primType
+|             TK_PR_CONST primType
+|             TK_PR_STATIC TK_PR_CONST primType;
 
 %%
 
 void yyerror (char const *s) {
-  fprintf (stderr, "%s\n", s);
+  printf("Erro Sintatico (Linha %d)!\n", 1);
 }

@@ -10,7 +10,9 @@ extern int yylex_destroy(void);
 int main (int argc, char **argv)
 {
   int ret = yyparse();
-  printf("Fez!");
+  if(ret == 0){
+    printf("Programa Ok!\n");
+  }
   yylex_destroy();
   return ret;
 }

@@ -2,8 +2,8 @@ all: etapa2
 
 etapa2: lex.yy.c main.c parser.y
 	bison -d parser.y
-	gcc -c lex.yy.c parser.tab.c
-	gcc -o etapa2 lex.yy.o parser.tab.o -lfl
+	gcc -c lex.yy.c parser.tab.c main.c
+	gcc -o etapa2 lex.yy.o parser.tab.o main.o -lfl
 
 lex.yy.c: scanner.l
 	flex scanner.l
@@ -11,4 +11,4 @@ lex.yy.c: scanner.l
 clean:
 	rm -rf *.o *~ etapa2
 	rm -rf lex.yy.*
-	rm parser.tab.*
+	rm -rf parser.tab.*

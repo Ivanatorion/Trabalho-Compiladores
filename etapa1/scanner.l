@@ -1,4 +1,5 @@
 %{
+#include <stdio.h>
 #include "tokens.h"
 
 int _LINE_NUMBER_UNIQUE_VAR_NAME = 1;
@@ -9,7 +10,7 @@ int _IS_OTHER_COMMENT = 0;
 
 %}
 
-especChar [\,\;\:\(\)\{\}\+\-\|\?\@\*\/\<\>\=\!\&\%\#\^\.\$\~\`]
+especChar [\[,\],\,\;\:\(\)\{\}\+\-\|\?\@\*\/\<\>\=\!\&\%\#\^\.\$\~\`]
 digit [0-9]
 litInt {digit}+
 cExp [eE][-+]?{litInt}?
