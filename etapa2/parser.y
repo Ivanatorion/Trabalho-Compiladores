@@ -138,13 +138,10 @@ argumento: TK_IDENTIFICADOR
 
 
 
-comandoShift: TK_IDENTIFICADOR TK_OC_SL shiftArg ';'
-|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL shiftArg ';'
-|             TK_IDENTIFICADOR TK_OC_SR shiftArg ';'
-|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR shiftArg ';';
-
-shiftArg: TK_LIT_INT
-|         expr;
+comandoShift: TK_IDENTIFICADOR TK_OC_SL expr ';'
+|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr ';'
+|             TK_IDENTIFICADOR TK_OC_SR expr ';'
+|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR expr ';';
 
 
 
