@@ -45,6 +45,7 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 "private" { RET_TOK(TK_PR_PRIVATE); }
 "public" { RET_TOK(TK_PR_PUBLIC); }
 "protected" { RET_TOK(TK_PR_PROTECTED); }
+"end" { RET_TOK(TK_PR_END); }
 
 "<=" { RET_TOK( TK_OC_LE ); }
 ">=" { RET_TOK( TK_OC_GE ); }
