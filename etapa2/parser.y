@@ -3,6 +3,7 @@
 
 int yylex(void);
 void yyerror (char const *s);
+int get_line_number();
 %}
 
 %token TK_PR_INT
@@ -51,16 +52,18 @@ void yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 %start programa
+
+%left TK_OC_LE TK_OC_GE TK_OC_EQ TK_OC_NE TK_OC_AND TK_OC_OR TK_OC_SL TK_OC_SR
+TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE '+' '*' '/' '-' '&' '?' '%' '|' '^' '!' '#' ':'
+
 %%
 
 programa: declVarGlobal programa;
 programa: declFunc programa;
 programa: ;
 
-
-
-declVarGlobal: TK_IDENTIFICADOR staticType ';'
-|        TK_IDENTIFICADOR '[' TK_LIT_INT ']' staticType ';';
+declVarGlobal: staticType TK_IDENTIFICADOR ';'
+|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';';
 
 staticType: TK_PR_STATIC primType
 |            primType;
@@ -124,19 +127,13 @@ comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
 comandoEntradaSaida: TK_PR_INPUT expr ';'
 |                    TK_PR_OUTPUT expr ';';
 
-
-
 comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';';
 
 listaArgs: argumento
 |          argumento ',' listaArgs
 | ;
 
-argumento: TK_IDENTIFICADOR
-|          literal
-|          expr;
-
-
+argumento: expr;
 
 comandoShift: TK_IDENTIFICADOR TK_OC_SL expr ';'
 |             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr ';'
@@ -159,7 +156,6 @@ comandoControleFluxo: TK_PR_IF '(' expr ')' TK_PR_THEN blocoComando
 |                     TK_PR_WHILE '(' expr ')' TK_PR_DO blocoComando;
 
 listaForComandos: ;
-
 
 
 expr: operando
@@ -195,5 +191,5 @@ operando: TK_IDENTIFICADOR
 %%
 
 void yyerror (char const *s) {
-  printf("Erro Sintatico (Linha %d)!\n", 1);
+  printf("Erro Sintatico (Linha %d)!\n", get_line_number());
 }

@@ -8,6 +8,8 @@ int _IS_OTHER_COMMENT = 0;
 
 #define RET_TOK(TOKEN) if(!_IS_LINE_COMMENT && !_IS_OTHER_COMMENT) return TOKEN;
 
+int get_line_number();
+
 %}
 
 especChar [\[,\],\,\;\:\(\)\{\}\+\-\|\?\@\*\/\<\>\=\!\&\%\#\^\.\$\~\`]
