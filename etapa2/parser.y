@@ -54,7 +54,7 @@ int get_line_number();
 %start programa
 
 %left TK_OC_LE TK_OC_GE TK_OC_EQ TK_OC_NE TK_OC_AND TK_OC_OR TK_OC_SL TK_OC_SR
-TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE '+' '*' '/' '-' '&' '?' '%' '|' '^' '!' '#' ':'
+TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE '<' '>' '+' '*' '/' '-' '&' '?' '%' '|' '^' '!' '#' ':'
 
 %%
 
@@ -70,7 +70,6 @@ staticType: TK_PR_STATIC primType
 
 primType: TK_PR_INT | TK_PR_CHAR | TK_PR_BOOL
 | TK_PR_STRING | TK_PR_FLOAT;
-
 
 
 declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' blocoComando;
@@ -116,8 +115,6 @@ literal: TK_LIT_INT
 |        TK_LIT_STRING;
 
 
-
-
 comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr ';';
 
@@ -127,11 +124,11 @@ comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
 comandoEntradaSaida: TK_PR_INPUT expr ';'
 |                    TK_PR_OUTPUT expr ';';
 
-comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';';
+comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';'
+|                   TK_IDENTIFICADOR '(' ')' ';';
 
 listaArgs: argumento
-|          argumento ',' listaArgs
-| ;
+|          argumento ',' listaArgs;
 
 argumento: expr;
 
@@ -148,14 +145,20 @@ comandoBreak: TK_PR_BREAK ';';
 
 comandoContinue: TK_PR_CONTINUE ';';
 
-
-
 comandoControleFluxo: TK_PR_IF '(' expr ')' TK_PR_THEN blocoComando
 |                     TK_PR_IF '(' expr ')' TK_PR_THEN blocoComando TK_PR_ELSE blocoComando
 |                     TK_PR_FOR '(' listaForComandos ':' expr ':' listaForComandos ')' blocoComando
 |                     TK_PR_WHILE '(' expr ')' TK_PR_DO blocoComando;
 
-listaForComandos: ;
+listaForComandos: forComando
+|                 forComando ',' listaForComandos;
+
+forComando: blocoComando
+|           comandoReturn
+|           comandoBreak
+|           comandoContinue
+|           comandoAtrib
+|           comandoShift;
 
 
 expr: operando
@@ -175,6 +178,8 @@ expr: operando
 |     expr '|' expr
 |     expr '&' expr
 |     expr '^' expr
+|     expr '<' expr
+|     expr '>' expr
 |     expr TK_OC_LE expr
 |     expr TK_OC_GE expr
 |     expr TK_OC_EQ expr

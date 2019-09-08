@@ -8,6 +8,9 @@ etapa2: lex.yy.c main.c parser.y
 lex.yy.c: scanner.l
 	flex scanner.l
 
+etapa2.tgz: main.c parser.y scanner.l Makefile
+	tar czf etapa2.tgz main.c parser.y scanner.l Makefile
+
 clean:
 	rm -rf *.o *~ etapa2
 	rm -rf lex.yy.*
