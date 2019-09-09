@@ -1,0 +1,10 @@
+/* Teste 4
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa Erro
+*/
+
+void main()
+{
+
+}

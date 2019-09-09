@@ -1,0 +1,25 @@
+/* Teste 1
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+float glob1;       // var global simples
+int glob2[100];    // var global vetor
+
+static int glob3[200];
+
+int main() {
+   static const bool flag1 <= true;
+
+   if (flag1 < 9) {
+      flag1 = 5 + flag1;    //Inconsistencia de tipos (Sem problemas agora)
+      return flag1;
+   }
+   else {
+      flag1 = 2 - flag2;    //Identificador nao declarado (Sem problemas agora)
+      return !flag1;
+   }
+
+   break;
+}

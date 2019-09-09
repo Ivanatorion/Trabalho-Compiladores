@@ -100,7 +100,8 @@ comando: blocoComando
 
 
 declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';'
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';';
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';'
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';';
 
 tipoVarLocal: primType
 |             TK_PR_STATIC primType
@@ -145,8 +146,8 @@ comandoBreak: TK_PR_BREAK ';';
 
 comandoContinue: TK_PR_CONTINUE ';';
 
-comandoControleFluxo: TK_PR_IF '(' expr ')' TK_PR_THEN blocoComando
-|                     TK_PR_IF '(' expr ')' TK_PR_THEN blocoComando TK_PR_ELSE blocoComando
+comandoControleFluxo: TK_PR_IF '(' expr ')' blocoComando
+|                     TK_PR_IF '(' expr ')' blocoComando TK_PR_ELSE blocoComando
 |                     TK_PR_FOR '(' listaForComandos ':' expr ':' listaForComandos ')' blocoComando
 |                     TK_PR_WHILE '(' expr ')' TK_PR_DO blocoComando;
 
