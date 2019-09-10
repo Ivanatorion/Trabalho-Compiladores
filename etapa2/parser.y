@@ -192,7 +192,9 @@ expr: operando
 operando: TK_IDENTIFICADOR
 |         TK_IDENTIFICADOR '[' expr ']'
 |         literal
-|         comandoChamadaFunc;
+|         comandoFuncExpr;
+
+comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')';
 
 %%
 

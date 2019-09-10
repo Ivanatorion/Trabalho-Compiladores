@@ -1,0 +1,20 @@
+/* Teste 9
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+int fatorial(int n)
+{
+	if(n==1) {
+		return 1;
+	}
+	
+	return n * fatorial(i);
+}
+
+int main() {
+
+	fatorial(5);
+	return 0;
+}
