@@ -11,7 +11,7 @@ char main() {
 	int x;
 	int y;
 
-	for(x=0;, y=1000; : x<30 : x=x+1;) {
+	for(x=0, y=1000 : x<30 : x=x+1) {
 		output x%3;
 	}
 

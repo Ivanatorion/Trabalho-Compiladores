@@ -87,21 +87,21 @@ listaComandos: comando listaComandos
 | ;
 
 comando: blocoComando
-|        declVarLocal
-|        comandoAtrib
-|        comandoEntradaSaida
-|        comandoChamadaFunc
-|        comandoShift
-|        comandoReturn
-|        comandoBreak
-|        comandoContinue
+|        declVarLocal ';'
+|        comandoAtrib ';'
+|        comandoEntradaSaida ';'
+|        comandoChamadaFunc ';'
+|        comandoShift ';'
+|        comandoReturn ';'
+|        comandoBreak ';'
+|        comandoContinue ';'
 |        comandoControleFluxo;
 
 
 
-declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';'
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';'
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';';
+declVarLocal: tipoVarLocal TK_IDENTIFICADOR
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR;
 
 tipoVarLocal: primType
 |             TK_PR_STATIC primType
@@ -116,35 +116,35 @@ literal: TK_LIT_INT
 |        TK_LIT_STRING;
 
 
-comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
-|             TK_IDENTIFICADOR '[' expr ']' '=' expr ';';
+comandoAtrib: TK_IDENTIFICADOR '=' expr
+|             TK_IDENTIFICADOR '[' expr ']' '=' expr;
 
 
 
 
-comandoEntradaSaida: TK_PR_INPUT expr ';'
-|                    TK_PR_OUTPUT expr ';';
+comandoEntradaSaida: TK_PR_INPUT expr
+|                    TK_PR_OUTPUT expr;
 
-comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';'
-|                   TK_IDENTIFICADOR '(' ')' ';';
+comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')'
+|                   TK_IDENTIFICADOR '(' ')';
 
 listaArgs: argumento
 |          argumento ',' listaArgs;
 
 argumento: expr;
 
-comandoShift: TK_IDENTIFICADOR TK_OC_SL expr ';'
-|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr ';'
-|             TK_IDENTIFICADOR TK_OC_SR expr ';'
-|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR expr ';';
+comandoShift: TK_IDENTIFICADOR TK_OC_SL expr
+|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr
+|             TK_IDENTIFICADOR TK_OC_SR expr
+|             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR expr;
 
 
 
-comandoReturn: TK_PR_RETURN expr ';';
+comandoReturn: TK_PR_RETURN expr;
 
-comandoBreak: TK_PR_BREAK ';';
+comandoBreak: TK_PR_BREAK;
 
-comandoContinue: TK_PR_CONTINUE ';';
+comandoContinue: TK_PR_CONTINUE;
 
 comandoControleFluxo: TK_PR_IF '(' expr ')' blocoComando
 |                     TK_PR_IF '(' expr ')' blocoComando TK_PR_ELSE blocoComando
