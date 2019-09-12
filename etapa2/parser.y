@@ -194,7 +194,8 @@ operando: TK_IDENTIFICADOR
 |         literal
 |         comandoFuncExpr;
 
-comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')';
+comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')'
+|                TK_IDENTIFICADOR '(' ')';
 
 %%
 
