@@ -1,0 +1,33 @@
+/* Teste 2
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa Erro
+*/
+
+char myGlobal;
+
+int main()
+{
+	int i[10];     // não pode ter vetor como variável local
+
+	myGlobal = 'a';
+
+	if(myGlobal == 'd') {
+		return 1;
+	}
+	
+	if(myGlobal == 'c') {
+		return 2;
+	}
+
+	if(myGlobal == 'b') {
+		return 3;
+	}
+
+	if(myGlobal == 'a') {
+		return 0;
+	}
+
+
+	return -1;
+}

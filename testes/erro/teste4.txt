@@ -1,0 +1,17 @@
+/* Teste 4
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa Erro
+*/
+
+
+// tem um parâmetro do tipo vetor na função, o que é proibido pela definição
+int main(int a, char c, int b, int x[100], float pi, bool b)
+{
+	a<<2;
+	a>>2;
+
+	a = 10*(b/10)+a+b+a%(b+1)^c | b;
+
+	return *a;
+}

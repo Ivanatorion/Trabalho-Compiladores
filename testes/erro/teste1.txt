@@ -1,4 +1,4 @@
-/* Teste 4
+/* Teste 1
 * Trabalho de Compiladores
 * Ivan e Marcelo
 * Programa Erro

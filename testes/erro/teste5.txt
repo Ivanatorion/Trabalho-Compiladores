@@ -1,0 +1,14 @@
+/* Teste 5
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa Erro
+*/
+
+float calculate(string str, float e) {
+
+	output str;
+
+	
+	// não pode ter expr na inicialização, apenas literais ou identificadores.
+	float x <= -e + 10.12345678;
+}
