@@ -12,6 +12,6 @@ etapa3.tgz: main.c parser.y scanner.l Makefile
 	tar czf etapa2.tgz main.c parser.y scanner.l Makefile
 
 clean:
-	rm -rf *.o *~ etapa2
+	rm -rf *.o *~ etapa3
 	rm -rf lex.yy.*
 	rm -rf parser.tab.*

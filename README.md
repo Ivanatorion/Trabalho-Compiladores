@@ -6,3 +6,5 @@ Integrantes:
     <li>Ivan Peter Lamb</li>
     <li>Marcelo Jantsch Wille</li>
 </ul>
+
+Definição do Trabalho: https://gitlab.com/schnorr/comp/tree/master/projeto

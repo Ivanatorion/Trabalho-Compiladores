@@ -27,6 +27,8 @@ int get_line_number();
   struct valLex valor_lexico;
 }
 
+%define parse.error verbose
+
 %token TK_PR_INT
 %token TK_PR_FLOAT
 %token TK_PR_BOOL
@@ -220,5 +222,6 @@ comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')';
 %%
 
 void yyerror (char const *s) {
-  printf("Erro Sintatico (Linha %d)!\n", get_line_number());
+  printf("Linha %d:\n", get_line_number());
+  printf("---> %s\n", s);
 }
