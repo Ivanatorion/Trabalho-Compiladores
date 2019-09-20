@@ -55,8 +55,20 @@ int get_line_number();
 %token TOKEN_ERRO
 %start programa
 
-%left TK_OC_LE TK_OC_GE TK_OC_EQ TK_OC_NE TK_OC_AND TK_OC_OR TK_OC_SL TK_OC_SR
-TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE '<' '>' '+' '*' '/' '-' '&' '?' '%' '|' '^' '!' '#' ':'
+/* menor precedência */
+%right '?' ':'               /* operador ternário ? */
+%left TK_OC_OR
+%left TK_OC_AND
+%left '|'
+%left '^'
+%left '&'
+%left TK_OC_EQ TK_OC_NE
+%left TK_OC_LE TK_OC_GE '<' '>'
+%left TK_OC_SL  TK_OC_SR     /* precisa desta definição de associatividade? */
+%left '+' '-'
+%left '*' '/' '%'
+%right '!' UNARY_PLUS UNARY_MINUS ADDRESS_OF DEREFERENCE EVAL_EXPR '#'
+/* maior precedência */
 
 %%
 
@@ -166,12 +178,12 @@ forComando: blocoComando
 
 expr: operando
 |     '(' expr ')'
-|     '+' expr
-|     '-' expr
+|     '+' expr                     %prec UNARY_PLUS
+|     '-' expr                     %prec UNARY_MINUS
 |     '!' expr
-|     '&' expr
-|     '*' expr
-|     '?' expr
+|     '&' expr                     %prec ADDRESS_OF
+|     '*' expr                     %prec DEREFERENCE
+|     '?' expr                     %prec EVAL_EXPR
 |     '#' expr
 |     expr '+' expr
 |     expr '-' expr
