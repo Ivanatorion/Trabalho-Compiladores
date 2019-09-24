@@ -2,8 +2,8 @@ all: etapa3
 
 etapa3: lex.yy.c main.c parser.y
 	bison -d parser.y
-	gcc -c lex.yy.c parser.tab.c main.c
-	gcc -o etapa3 lex.yy.o parser.tab.o main.o -lfl
+	gcc -c lex.yy.c parser.tab.c main.c src/arvore.c
+	gcc -o etapa3 arvore.o lex.yy.o parser.tab.o main.o -lfl
 
 lex.yy.c: scanner.l
 	flex scanner.l

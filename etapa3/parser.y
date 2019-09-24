@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include "include/defines.h"
+#include "include/arvore.h"
 
 int yylex(void);
 void yyerror (char const *s);
@@ -24,10 +25,18 @@ void libera(void *head);
       char valTokChar;
     };
   };
+
+  typedef struct arvore_t{
+    struct arvore_t** filhos;
+    int nFilhos;
+
+    struct valLex valor_lexico;
+  } NODO_ARVORE;
 }
 
 %union {
   struct valLex valor_lexico;
+  NODO_ARVORE* nodo_arvore;
 }
 
 %define parse.error verbose
@@ -78,6 +87,8 @@ void libera(void *head);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 %start programa
+
+%type<nodo_arvore> literal
 
 /* menor precedência */
 %right '?' ':'               /* operador ternário está certo? */
@@ -146,18 +157,15 @@ tipoVarLocal: primType
 |             TK_PR_CONST primType
 |             TK_PR_STATIC TK_PR_CONST primType;
 
-literal: TK_LIT_INT
-|        TK_LIT_CHAR
-|        TK_LIT_TRUE
-|        TK_LIT_FALSE
-|        TK_LIT_FLOAT
-|        TK_LIT_STRING;
-
+literal: TK_LIT_INT { $$ = createNode(yylval.valor_lexico, 0);}
+|        TK_LIT_CHAR { $$ = createNode(yylval.valor_lexico, 0);}
+|        TK_LIT_TRUE { $$ = createNode(yylval.valor_lexico, 0);}
+|        TK_LIT_FALSE { $$ = createNode(yylval.valor_lexico, 0);}
+|        TK_LIT_FLOAT { $$ = createNode(yylval.valor_lexico, 0);}
+|        TK_LIT_STRING { $$ = createNode(yylval.valor_lexico, 0);};
 
 comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr ';';
-
-
 
 
 comandoEntradaSaida: TK_PR_INPUT expr ';'
