@@ -88,7 +88,12 @@ void libera(void *head);
 %token TOKEN_ERRO
 %start programa
 
-%type<nodo_arvore> literal
+%type<nodo_arvore> literal operando expr comandoFuncExpr listaArgs
+
+%type<valor_lexico> TK_IDENTIFICADOR TK_LIT_INT TK_LIT_CHAR TK_LIT_FLOAT
+TK_LIT_FALSE TK_LIT_TRUE TK_LIT_STRING TK_OC_EQ TK_OC_LE TK_OC_GE
+TK_OC_NE TK_OC_AND TK_OC_OR TK_OC_BASH_PIPE TK_OC_FORWARD_PIPE
+'+' '-' '*' '/' '!' '?' '&' '#' '%' '|' '^' '<' '>' ':'
 
 /* menor precedência */
 %right '?' ':'               /* operador ternário está certo? */
@@ -146,8 +151,6 @@ comando: blocoComando
 |        comandoContinue
 |        comandoControleFluxo;
 
-
-
 declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';'
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';'
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';';
@@ -157,16 +160,15 @@ tipoVarLocal: primType
 |             TK_PR_CONST primType
 |             TK_PR_STATIC TK_PR_CONST primType;
 
-literal: TK_LIT_INT { $$ = createNode(yylval.valor_lexico, 0);}
-|        TK_LIT_CHAR { $$ = createNode(yylval.valor_lexico, 0);}
-|        TK_LIT_TRUE { $$ = createNode(yylval.valor_lexico, 0);}
-|        TK_LIT_FALSE { $$ = createNode(yylval.valor_lexico, 0);}
-|        TK_LIT_FLOAT { $$ = createNode(yylval.valor_lexico, 0);}
-|        TK_LIT_STRING { $$ = createNode(yylval.valor_lexico, 0);};
+literal: TK_LIT_INT { $$ = createNode($1, 0);}
+|        TK_LIT_CHAR { $$ = createNode($1, 0);}
+|        TK_LIT_TRUE { $$ = createNode($1, 0);}
+|        TK_LIT_FALSE { $$ = createNode($1, 0);}
+|        TK_LIT_FLOAT { $$ = createNode($1, 0);}
+|        TK_LIT_STRING { $$ = createNode($1, 0);};
 
-comandoAtrib: TK_IDENTIFICADOR '=' expr ';'
+comandoAtrib: TK_IDENTIFICADOR '=' expr ';' {printArvore($3);}
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr ';';
-
 
 comandoEntradaSaida: TK_PR_INPUT expr ';'
 |                    TK_PR_OUTPUT expr ';';
@@ -183,8 +185,6 @@ comandoShift: TK_IDENTIFICADOR TK_OC_SL expr ';'
 |             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr ';'
 |             TK_IDENTIFICADOR TK_OC_SR expr ';'
 |             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR expr ';';
-
-
 
 comandoReturn: TK_PR_RETURN expr ';';
 
@@ -208,39 +208,42 @@ forComando: blocoComando
 |           comandoShift;
 
 
-expr: operando
-|     '(' expr ')'
-|     '+' expr                     %prec UNARY_PLUS
-|     '-' expr                     %prec UNARY_MINUS
-|     '!' expr
-|     '&' expr                     %prec ADDRESS_OF
-|     '*' expr                     %prec DEREFERENCE
-|     '?' expr                     %prec EVAL_EXPR
-|     '#' expr
-|     expr '+' expr
-|     expr '-' expr
-|     expr '*' expr
-|     expr '/' expr
-|     expr '%' expr
-|     expr '|' expr
-|     expr '&' expr
-|     expr '^' expr
-|     expr '<' expr
-|     expr '>' expr
-|     expr TK_OC_LE expr
-|     expr TK_OC_GE expr
-|     expr TK_OC_EQ expr
-|     expr TK_OC_NE expr
-|     expr TK_OC_AND expr
-|     expr TK_OC_OR expr
-|     expr '?' expr ':' expr;
+expr: operando {$$ = $1;}
+|     '(' expr ')' {$$ = $2;}
+|     '+' expr     {$$ = createNode($1, 1); addFilho($$, $2);} %prec UNARY_PLUS
+|     '-' expr     {$$ = createNode($1, 1); addFilho($$, $2);}                %prec UNARY_MINUS
+|     '!' expr     {$$ = createNode($1, 1); addFilho($$, $2);}
+|     '&' expr     {$$ = createNode($1, 1); addFilho($$, $2);}                %prec ADDRESS_OF
+|     '*' expr     {$$ = createNode($1, 1); addFilho($$, $2);}                %prec DEREFERENCE
+|     '?' expr     {$$ = createNode($1, 1); addFilho($$, $2);}                %prec EVAL_EXPR
+|     '#' expr     {$$ = createNode($1, 1); addFilho($$, $2);}
+|     expr '+' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '-' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '*' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '/' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '%' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '|' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '&' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '^' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '<' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '>' expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_LE expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_GE expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_EQ expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_NE expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_AND expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr TK_OC_OR expr {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, $3); }
+|     expr '?' expr ':' expr {$$ = createNode($4, 3); addFilho($$, $1); addFilho($$, $3); addFilho($$, $5);} ;
 
-operando: TK_IDENTIFICADOR
-|         TK_IDENTIFICADOR '[' expr ']'
-|         literal
+operando: TK_IDENTIFICADOR {$$ = createNode($1, 0);}
+|         TK_IDENTIFICADOR '[' expr ']' {$$ = createNode(yylval.valor_lexico, 2);
+                                         addFilho($$, createNode($1, 0));
+                                         addFilho($$, $3);}
+
+|         literal {$$ = $1;}
 |         comandoFuncExpr;
 
-comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')';
+comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')' {$$ = createNode($1, 2); addFilho($$, createNode($1, 0)); addFilho($$, $3);};
 
 %%
 
@@ -249,11 +252,9 @@ void yyerror (char const *s) {
   printf("---> %s\n", s);
 }
 
-
 void exporta(void *head) {
-
+  //printArvore(head);
 }
-
 
 void libera(void *head) {
 
