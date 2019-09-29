@@ -28,6 +28,11 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
 }
 
 void printArvore(NODO_ARVORE* arvore){
+  if(arvore == NULL){
+    printf("Null Leaf: %p\n", arvore);
+    return;
+  }
+
   if(arvore->nFilhos == 0){
     printf("Leaf: %p ", arvore);
   }
@@ -61,5 +66,40 @@ void printArvore(NODO_ARVORE* arvore){
   for(int i = 0; i < arvore->nFilhos; i++){
     printf("%p: %p\n", arvore, arvore->filhos[i]);
     printArvore(arvore->filhos[i]);
+  }
+}
+
+void libera_arvore(NODO_ARVORE* arvore){
+  if(arvore == NULL)
+    return;
+
+  for(int i = 0; i < arvore->nFilhos; i++){
+    libera_arvore(arvore->filhos[i]);
+  }
+
+  if(arvore->nFilhos > 0){
+    free(arvore->filhos);
+    arvore->filhos = NULL;
+  }
+
+  switch (arvore->valor_lexico.tipo_literal) {
+    case TL_NONE:
+      free(arvore->valor_lexico.valTokStr);
+      break;
+    default:
+      break;
+  }
+
+  free(arvore);
+}
+
+void exporta_arvore(NODO_ARVORE* arvore, FILE* fp){
+  if(arvore == NULL){
+    return;
+  }
+
+  for(int i = 0; i < arvore->nFilhos; i++){
+    fprintf(fp, "%p, %p\n", arvore, arvore->filhos[i]);
+    exporta_arvore(arvore->filhos[i], fp);
   }
 }

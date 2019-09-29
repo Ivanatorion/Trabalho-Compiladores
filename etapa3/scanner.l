@@ -21,7 +21,10 @@ void setYyVal(int tipo_tok, int tipo_lit){
 
   switch(tipo_lit){
     case TL_NONE:
-      yylval.valor_lexico.valTokStr = strdup(yytext);
+      if(tipo_tok != TT_CE)
+        yylval.valor_lexico.valTokStr = strdup(yytext);
+      else
+        yylval.valor_lexico.valTokStr = NULL;
       break;
     case TL_INT:
       yylval.valor_lexico.valTokInt = atoi(yytext);
