@@ -21,7 +21,7 @@ void setYyVal(int tipo_tok, int tipo_lit){
 
   switch(tipo_lit){
     case TL_NONE:
-      if(tipo_tok != TT_CE)
+      if(tipo_tok != TT_CE && tipo_tok != TT_PR)
         yylval.valor_lexico.valTokStr = strdup(yytext);
       else
         yylval.valor_lexico.valTokStr = NULL;

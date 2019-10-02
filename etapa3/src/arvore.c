@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-NODO_ARVORE* createNode(struct valLex valor, int nFilhos){
+NODO_ARVORE* createNode(struct valLex valor, int nFilhosMax){
   NODO_ARVORE *nodo = malloc(sizeof(NODO_ARVORE));
-  nodo->nFilhos = nFilhos;
+  nodo->nFilhos = 0;
+  nodo->nFilhosMax = nFilhosMax;
 
-  if(nFilhos > 0){
-    nodo->filhos = malloc(sizeof(NODO_ARVORE*) * nFilhos);
-    for(int i = 0; i < nFilhos; i++)
+  if(nFilhosMax > 0){
+    nodo->filhos = malloc(sizeof(NODO_ARVORE*) * nFilhosMax);
+    for(int i = 0; i < nFilhosMax; i++)
       nodo->filhos[i] = NULL;
   }
   else
@@ -20,19 +21,21 @@ NODO_ARVORE* createNode(struct valLex valor, int nFilhos){
 }
 
 void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
-  if(pai->nFilhos == 0){
-    printf("Nao da pra adicionar filho! ERRO!\n");
-    return;
+  int i = pai->nFilhos;
+
+  if(i == pai->nFilhosMax){
+    if(i == 0)
+      return;
+    else if(pai->filhos[i-1] == NULL){
+      pai->filhos[i-1] = filho;
+    }
+    else
+      addFilho(pai->filhos[i-1], filho);
   }
-
-  int i = 0;
-  while(i < pai->nFilhos &&pai->filhos[i] != NULL)
-    i++;
-
-  if(i < pai->nFilhos)
+  else{
     pai->filhos[i] = filho;
-  else
-    addFilho(pai->filhos[i-1], filho);
+    pai->nFilhos++;
+  }
 }
 
 void printArvore(NODO_ARVORE* arvore){
@@ -41,7 +44,7 @@ void printArvore(NODO_ARVORE* arvore){
     return;
   }
 
-  if(arvore->nFilhos == 0){
+  if(arvore->nFilhosMax == 0){
     printf("Leaf: %p ", arvore);
   }
   else{
@@ -71,7 +74,7 @@ void printArvore(NODO_ARVORE* arvore){
   }
   printf("\n");
 
-  for(int i = 0; i < arvore->nFilhos; i++){
+  for(int i = 0; i < arvore->nFilhosMax; i++){
     printf("%p: %p\n", arvore, arvore->filhos[i]);
     printArvore(arvore->filhos[i]);
   }
@@ -81,11 +84,11 @@ void libera_arvore(NODO_ARVORE* arvore){
   if(arvore == NULL)
     return;
 
-  for(int i = 0; i < arvore->nFilhos; i++){
+  for(int i = 0; i < arvore->nFilhosMax; i++){
     libera_arvore(arvore->filhos[i]);
   }
 
-  if(arvore->nFilhos > 0){
+  if(arvore->nFilhosMax > 0){
     free(arvore->filhos);
     arvore->filhos = NULL;
   }
@@ -106,7 +109,7 @@ void exporta_arvore(NODO_ARVORE* arvore, FILE* fp){
     return;
   }
 
-  for(int i = 0; i < arvore->nFilhos; i++){
+  for(int i = 0; i < arvore->nFilhosMax; i++){
     fprintf(fp, "%p, %p\n", arvore, arvore->filhos[i]);
     exporta_arvore(arvore->filhos[i], fp);
   }
