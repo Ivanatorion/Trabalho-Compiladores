@@ -119,41 +119,35 @@ TK_PR_RETURN TK_PR_BREAK TK_PR_IF TK_PR_FOR TK_PR_WHILE TK_PR_CONTINUE
 %%
 
 programa: declVarGlobal programa {$$ = NULL; arvore = $$;}; //Nao precisa
-programa: declFunc programa {$$ = createNode($1->valor_lexico, 2); $$->valor_lexico.valTokStr = strdup($$->valor_lexico.valTokStr); addFilho($$, $1); addFilho($$, $2); arvore = $$;};
+programa: declFunc programa {$$ = $1; addFilho($$, $2); arvore = $$;};
 programa: {$$ = NULL; arvore = $$;};
 
 declVarGlobal: staticType TK_IDENTIFICADOR ';'
 |        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';';
 
-staticType: TK_PR_STATIC primType {$$ = createNode($1, 1); addFilho($$, $2);}
-|            primType {$$ = $1;};
+staticType: TK_PR_STATIC primType
+|            primType;
 
-primType: TK_PR_INT {$$ = createNode($1, 0);}
-| TK_PR_CHAR {$$ = createNode($1, 0);}
-| TK_PR_BOOL {$$ = createNode($1, 0);}
-| TK_PR_STRING {$$ = createNode($1, 0);}
-| TK_PR_FLOAT {$$ = createNode($1, 0);};
+primType: TK_PR_INT
+| TK_PR_CHAR
+| TK_PR_BOOL
+| TK_PR_STRING
+| TK_PR_FLOAT;
 
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' blocoComando {$$ = createNode($2, 4); $$->valor_lexico.valTokStr = strdup($$->valor_lexico.valTokStr); addFilho($$, $1);
-                                                                        addFilho($$, createNode($2, 0));
-                                                                        addFilho($$, $4);
-                                                                        addFilho($$, $6);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' blocoComando {$$ = createNode($2, 2); addFilho($$, $6);};
 
-listaParams: parametro {$$ = $1;}
-|            parametro ',' listaParams {$$ = createNode($1->valor_lexico, 2); $$->valor_lexico.valTokStr = strdup($$->valor_lexico.valTokStr); addFilho($$, $1); addFilho($$, $3);}
-| {$$ = createNode(yylval.valor_lexico, 0);} ;
+listaParams: parametro
+|            parametro ',' listaParams
+| ;
 
-parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = createNode($3, 3);
-                                                  addFilho($$, createNode($1, 0));
-                                                  addFilho($$, $2);
-                                                  addFilho($$, createNode($3, 0));}
-|          primType TK_IDENTIFICADOR {$$ = createNode($2, 2); addFilho($$, $1); addFilho($$, createNode($2, 0));};
+parametro: TK_PR_CONST primType TK_IDENTIFICADOR
+|          primType TK_IDENTIFICADOR ;
 
 blocoComando: '{' listaComandos '}' {$$ = $2;} ;
 
-listaComandos: comando listaComandos {$$ = createNode(yylval.valor_lexico, 2); addFilho($$, $1); addFilho($$, $2);}
-| {$$ = createNode(yylval.valor_lexico, 0);} ;
+listaComandos: comando listaComandos {$$ = $1; addFilho($$, $2);}
+| {$$ = NULL;} ;
 
 comando: blocoComando {$$ = $1;}
 |        declVarLocal {$$ = NULL;} //Precisa?
@@ -182,8 +176,8 @@ literal: TK_LIT_INT { $$ = createNode($1, 0);}
 |        TK_LIT_FLOAT { $$ = createNode($1, 0);}
 |        TK_LIT_STRING { $$ = createNode($1, 0);};
 
-comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 2); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
-|             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 2); $$->valor_lexico.valTokStr = strdup("=");
+comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
+|             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
                                                           addFilho($$, createNode($2, 2));
                                                           $$->filhos[0]->valor_lexico.valTokStr = strdup("[]");
                                                           addFilho($$->filhos[0], createNode($1, 0));
@@ -193,17 +187,17 @@ comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 2); $$->valor_lexic
 comandoEntradaSaida: TK_PR_INPUT expr ';'
 |                    TK_PR_OUTPUT expr ';';
 
-comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';' {$$ = createNode($1, 2); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
+comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';' {$$ = createNode($1, 1); addFilho($$, $3);}
 
 listaArgs: argumento {$$ = $1;}
-|          argumento ',' listaArgs {$$ = createNode($1->valor_lexico, 2); $$->valor_lexico.valTokStr = strdup($$->valor_lexico.valTokStr); addFilho($$, $1); addFilho($$, $3);}
-| {$$ = createNode(yylval.valor_lexico, 0);};
+|          argumento ',' listaArgs {$$ = $1; addFilho($$, $3);}
+| {$$ = NULL;};
 
 argumento: expr {$$ = $1;};
 
-comandoShift: TK_IDENTIFICADOR TK_OC_SL expr {$$ = createNode($2, 2); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
+comandoShift: TK_IDENTIFICADOR TK_OC_SL expr {$$ = createNode($2, 3); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
 |             TK_IDENTIFICADOR '[' expr ']' TK_OC_SL expr {$$ = createNode($5, 3); addFilho($$, createNode($1, 0)); addFilho($$, $3); addFilho($$, $6);}
-|             TK_IDENTIFICADOR TK_OC_SR expr {$$ = createNode($2, 2); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
+|             TK_IDENTIFICADOR TK_OC_SR expr {$$ = createNode($2, 3); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
 |             TK_IDENTIFICADOR '[' expr ']' TK_OC_SR expr {$$ = createNode($5, 3); addFilho($$, createNode($1, 0)); addFilho($$, $3); addFilho($$, $6);};
 
 comandoReturn: TK_PR_RETURN expr {$$ = createNode($1, 1); addFilho($$, $2);};

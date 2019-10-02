@@ -20,11 +20,19 @@ NODO_ARVORE* createNode(struct valLex valor, int nFilhos){
 }
 
 void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
+  if(pai->nFilhos == 0){
+    printf("Nao da pra adicionar filho! ERRO!\n");
+    return;
+  }
+
   int i = 0;
-  while(pai->filhos[i] != NULL)
+  while(i < pai->nFilhos &&pai->filhos[i] != NULL)
     i++;
 
-  pai->filhos[i] = filho;
+  if(i < pai->nFilhos)
+    pai->filhos[i] = filho;
+  else
+    addFilho(pai->filhos[i-1], filho);
 }
 
 void printArvore(NODO_ARVORE* arvore){
