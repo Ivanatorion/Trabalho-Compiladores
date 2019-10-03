@@ -161,7 +161,7 @@ comando: blocoComando {$$ = $1;}
 |        comandoControleFluxo {$$ = $1;};
 
 declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {$$ = NULL;}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4);}
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0));};
 
 tipoVarLocal: primType

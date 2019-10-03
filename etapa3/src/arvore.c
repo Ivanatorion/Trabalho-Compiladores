@@ -95,6 +95,7 @@ void libera_arvore(NODO_ARVORE* arvore){
 
   switch (arvore->valor_lexico.tipo_literal) {
     case TL_NONE:
+    case TL_STRING:
       free(arvore->valor_lexico.valTokStr);
       break;
     default:
