@@ -160,21 +160,21 @@ comando: blocoComando {$$ = $1;}
 |        comandoContinue ';' {$$ = $1;}
 |        comandoControleFluxo {$$ = $1;};
 
-declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {$$ = NULL;}
+declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {$$ = NULL; free($2.valTokStr);}
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0));};
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
 
 tipoVarLocal: primType
 |             TK_PR_STATIC primType
 |             TK_PR_CONST primType
 |             TK_PR_STATIC TK_PR_CONST primType;
 
-literal: TK_LIT_INT { $$ = createNode($1, 0);}
-|        TK_LIT_CHAR { $$ = createNode($1, 0);}
-|        TK_LIT_TRUE { $$ = createNode($1, 0);}
-|        TK_LIT_FALSE { $$ = createNode($1, 0);}
-|        TK_LIT_FLOAT { $$ = createNode($1, 0);}
-|        TK_LIT_STRING { $$ = createNode($1, 0);};
+literal: TK_LIT_INT { $$ = createNode($1, 1);}
+|        TK_LIT_CHAR { $$ = createNode($1, 1);}
+|        TK_LIT_TRUE { $$ = createNode($1, 1);}
+|        TK_LIT_FALSE { $$ = createNode($1, 1);}
+|        TK_LIT_FLOAT { $$ = createNode($1, 1);}
+|        TK_LIT_STRING { $$ = createNode($1, 1);};
 
 comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
@@ -187,7 +187,7 @@ comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexic
 comandoEntradaSaida: TK_PR_INPUT expr ';' {libera_arvore($2);}
 |                    TK_PR_OUTPUT expr ';' {libera_arvore($2);};
 
-comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';' {$$ = createNode($1, 1); addFilho($$, $3);}
+comandoChamadaFunc: TK_IDENTIFICADOR '(' listaArgs ')' ';' {$$ = createNode($1, 2); addFilho($$, $3);}
 
 listaArgs: argumento {$$ = $1;}
 |          argumento ',' listaArgs {$$ = $1; addFilho($$, $3);}
@@ -263,15 +263,15 @@ expr: operando {$$ = $1;}
 |     expr TK_OC_OR expr {$$ = createNode($2, 3); addFilho($$, $1); addFilho($$, $3); }
 |     expr '?' expr ':' expr {$$ = createNode($4, 3); $$->valor_lexico.valTokStr = strdup("?:"); addFilho($$, $1); addFilho($$, $3); addFilho($$, $5);} ;
 
-operando: TK_IDENTIFICADOR {$$ = createNode($1, 0);}
-|         TK_IDENTIFICADOR '[' expr ']' {$$ = createNode($2, 2); $$->valor_lexico.valTokStr = strdup("[]");
+operando: TK_IDENTIFICADOR {$$ = createNode($1, 1);}
+|         TK_IDENTIFICADOR '[' expr ']' {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("[]");
                                          addFilho($$, createNode($1, 0));
                                          addFilho($$, $3);}
 
 |         literal {$$ = $1;}
 |         comandoFuncExpr {$$ = $1;};
 
-comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')' {$$ = createNode($1, 2); addFilho($$, createNode($1, 0)); addFilho($$, $3);};
+comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')' {$$ = createNode($1, 2); addFilho($$, $3);};
 
 %%
 

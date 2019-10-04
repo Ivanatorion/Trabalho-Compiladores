@@ -40,7 +40,6 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
 
 void printArvore(NODO_ARVORE* arvore){
   if(arvore == NULL){
-    printf("Null Leaf: %p\n", arvore);
     return;
   }
 
@@ -75,7 +74,7 @@ void printArvore(NODO_ARVORE* arvore){
   printf("\n");
 
   for(int i = 0; i < arvore->nFilhosMax; i++){
-    printf("%p: %p\n", arvore, arvore->filhos[i]);
+    printf("%p, %p\n", arvore, arvore->filhos[i]);
     printArvore(arvore->filhos[i]);
   }
 }
@@ -111,7 +110,9 @@ void exporta_arvore(NODO_ARVORE* arvore, FILE* fp){
   }
 
   for(int i = 0; i < arvore->nFilhosMax; i++){
-    fprintf(fp, "%p, %p\n", arvore, arvore->filhos[i]);
-    exporta_arvore(arvore->filhos[i], fp);
+    if(arvore->filhos[i] != NULL){
+      fprintf(fp, "%p, %p\n", arvore, arvore->filhos[i]);
+      exporta_arvore(arvore->filhos[i], fp);
+    }
   }
 }

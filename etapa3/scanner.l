@@ -15,6 +15,9 @@ int _IS_OTHER_COMMENT = 0;
 int get_line_number();
 
 void setYyVal(int tipo_tok, int tipo_lit){
+  if(_IS_LINE_COMMENT || _IS_OTHER_COMMENT)
+    return;
+
   yylval.valor_lexico.line_number = get_line_number();
   yylval.valor_lexico.tipo_token = tipo_tok;
   yylval.valor_lexico.tipo_literal = tipo_lit;
