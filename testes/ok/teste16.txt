@@ -1,0 +1,24 @@
+/* Teste 16
+ * Trabalho de Compiladores
+ * Ivan e Marcelo
+ * Programa OK
+ */
+
+int main()
+{
+	// testa comandos em bloco
+
+	int a;
+	a = 3;
+	{
+		a = 4;
+		{
+			a=5;
+			a = 6;
+		}
+		a = 7;
+	}
+	a = 8;
+
+	return 1;
+}
