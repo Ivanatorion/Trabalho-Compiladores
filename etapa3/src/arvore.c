@@ -38,17 +38,31 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
   }
 }
 
-void printArvore(NODO_ARVORE* arvore){
+void format(int spaces) {
+  int lines = 2, columns = 3;
+
+  for(int j=0; j<lines; j++) {
+    printf("\n");
+    for(int k=0; k<columns*spaces;k++) {
+      printf(" ");
+    }
+    printf("|");
+  }
+
+  for(int k=0; k<columns-1; k++) {
+    printf("-");
+  }
+}
+
+void printArvore(NODO_ARVORE* arvore, int spaces){
+
   if(arvore == NULL){
     return;
   }
 
-  if(arvore->nFilhosMax == 0){
-    printf("Leaf: %p ", arvore);
-  }
-  else{
-    printf("Node: %p ", arvore);
-  }
+  if(spaces != 0)
+    format(spaces);
+
   if(arvore->valor_lexico.tipo_token == TT_LIT){
     switch(arvore->valor_lexico.tipo_literal){
       case TL_INT:
@@ -71,11 +85,11 @@ void printArvore(NODO_ARVORE* arvore){
   else{
     printf("(%s)", arvore->valor_lexico.valTokStr);
   }
-  printf("\n");
 
   for(int i = 0; i < arvore->nFilhosMax; i++){
-    printf("%p, %p\n", arvore, arvore->filhos[i]);
-    printArvore(arvore->filhos[i]);
+    if(arvore->filhos[i] != NULL) {
+      printArvore(arvore->filhos[i], spaces+1);
+    }
   }
 }
 

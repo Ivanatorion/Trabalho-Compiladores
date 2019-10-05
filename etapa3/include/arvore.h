@@ -14,6 +14,6 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho);
 void libera_arvore(NODO_ARVORE* arvore);
 void exporta_arvore(NODO_ARVORE* arvore, FILE* fp);
 
-void printArvore(NODO_ARVORE* arvore);
+void printArvore(NODO_ARVORE* arvore, int spaces);
 
 #endif

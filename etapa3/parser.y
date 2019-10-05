@@ -281,7 +281,7 @@ void yyerror (char const *s) {
 }
 
 void exporta(void *head) {
-  printArvore(head);
+  printArvore(head, 0);
   FILE *fp = fopen("e3.csv", "w");
   exporta_arvore((NODO_ARVORE*) head, fp);
   fclose(fp);
