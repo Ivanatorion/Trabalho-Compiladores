@@ -20,6 +20,7 @@ typedef struct simbolo_info{
   int tamanho;
 
   ARG_LIST* argList;
+  int nArgs;
 
   struct valLex valor;
 } S_INFO;

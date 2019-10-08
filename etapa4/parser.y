@@ -103,7 +103,7 @@ TK_PR_RETURN TK_PR_BREAK TK_PR_IF TK_PR_FOR TK_PR_WHILE TK_PR_CONTINUE
 '+' '-' '*' '/' '!' '?' '&' '#' '%' '|' '^' '<' '>' ':' '=' '(' ')' '[' ']'
 
 /* menor precedência */
-%right '?' ':'               /* operador ternário está certo? */
+%right '?' ':'
 %left TK_OC_OR
 %left TK_OC_AND
 %left '|'
@@ -281,8 +281,16 @@ void yyerror (char const *s) {
 }
 
 void exporta(void *head) {
+
+  /* prints de debugging */
+  printf("AST:\n\n");
   printArvore(head, 0);
-  FILE *fp = fopen("e3.csv", "w");
+  printf("\n\nTabela de Símbolos:\n");
+  // print_tabela(?);
+  printf("\n");
+  /* fim dos prints de debugging */
+
+  FILE *fp = fopen("e4.csv", "w");
   exporta_arvore((NODO_ARVORE*) head, fp);
   fclose(fp);
 }
