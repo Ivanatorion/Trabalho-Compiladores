@@ -1,10 +1,9 @@
 #ifndef TABELA_S
 #define TABELA_S
 
-#include "../parser.tab.h"
 #include "defines.h"
 
-#define INIT_MAX_ENTRADAS 32
+#define INIT_MAX_ENTRADAS 8
 
 typedef struct argl{
   struct argl *prox;
@@ -22,7 +21,13 @@ typedef struct simbolo_info{
   ARG_LIST* argList;
   int nArgs;
 
-  struct valLex valor;
+  union{
+    char *idName;
+    int litIntVal;
+    int litBoolVal;
+    float litFloatVal;
+  };
+
 } S_INFO;
 
 typedef struct tabela_s{
@@ -41,6 +46,9 @@ void free_tabela(T_SIMBOLO* tabela);
 
 //Retorna codigos de erro
 int insere_tabela(T_SIMBOLO* tabela, S_INFO info);
+
+//Retorna codigos de erro, armazena em "info" o valor armazenado na tabela
+int consulta_tabela(T_SIMBOLO* tabela, char* chave, S_INFO* info);
 
 void print_tabela(T_SIMBOLO* tabela);
 

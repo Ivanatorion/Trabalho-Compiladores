@@ -38,21 +38,31 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
     tabela->maxEntradas = tabela->maxEntradas * 2;
     S_INFO **entradasNovas = (S_INFO**) malloc(sizeof(S_INFO*) * tabela->maxEntradas);
 
-    for(int i = 0; i < tabela->nEntradas; i++)
-      entradasNovas[i] = tabela->entradas[i];
-
-    for(int i = tabela->nEntradas; i < tabela->maxEntradas; i++)
+    for(int i = 0; i < tabela->maxEntradas; i++)
       entradasNovas[i] = NULL;
+
+    //Re-hash
+    for(int i = 0; i < tabela->nEntradas; i++){
+      int posicao = hash(tabela->entradas[i]->idName) % tabela->maxEntradas;
+
+      while(entradasNovas[posicao] != NULL){
+        posicao++;
+        if(posicao == tabela->maxEntradas)
+          posicao = 0;
+      }
+
+      entradasNovas[posicao] = tabela->entradas[i];
+    }
 
     free(tabela->entradas);
     tabela->entradas = entradasNovas;
   }
 
-  int posicao = hash(info.valor.valTokStr) % tabela->maxEntradas;
+  int posicao = hash(info.idName) % tabela->maxEntradas;
 
   while(tabela->entradas[posicao] != NULL){
 
-    if(!strcmp(tabela->entradas[posicao]->valor.valTokStr, info.valor.valTokStr))
+    if(!strcmp(tabela->entradas[posicao]->idName, info.idName))
       return ERR_DECLARED;
 
     posicao++;
@@ -62,11 +72,48 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
 
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;
+
+  if(entrada->natureza == NATUREZA_IDENTIFICADOR)
+    entrada->idName = strdup(entrada->idName);
+
   tabela->entradas[posicao] = entrada;
 
   tabela->nEntradas++;
 
   return 0;
+}
+
+int consulta_tabela(T_SIMBOLO* tabela, char* chave, S_INFO* info){
+  if(DEBUG_MODE)
+    printf("\033[0;32m\nProcurando por: %s\n\033[0m", chave);
+
+  int posicao = hash(chave) % tabela->maxEntradas;
+
+  int verificados = 0;
+  while(tabela->entradas[posicao] != NULL && verificados != tabela->nEntradas){
+    verificados++;
+
+    if(DEBUG_MODE)
+      printf("\033[0;32m%d) %s\n\033[0m", verificados, tabela->entradas[posicao]->idName);
+
+    if(!strcmp(chave, tabela->entradas[posicao]->idName)){
+      *info = *(tabela->entradas[posicao]);
+
+      if(DEBUG_MODE)
+        printf("\033[0;32mEncontrou %s depois de %d verificacoes\n\n\033[0m", chave, verificados);
+
+      return 0;
+    }
+
+    posicao++;
+    if(posicao == tabela->maxEntradas)
+      posicao = 0;
+  }
+
+  if(DEBUG_MODE)
+    printf("\033[0;32mNao encontrou %s. Verificados %d.\n\n\033[0m", chave, verificados+1);
+
+  return ERR_UNDECLARED;
 }
 
 void free_tabela(T_SIMBOLO* tabela){
@@ -76,18 +123,28 @@ void free_tabela(T_SIMBOLO* tabela){
   if(tabela->ant != NULL)
     tabela->ant->prox = tabela->prox;
 
-  for(int i = 0; i < tabela->maxEntradas; i++)
-    if(tabela->entradas[i] != NULL)
+  for(int i = 0; i < tabela->maxEntradas; i++){
+    if(tabela->entradas[i] != NULL){
+      if(tabela->entradas[i]->natureza == NATUREZA_IDENTIFICADOR)
+        free(tabela->entradas[i]->idName);
+
       free(tabela->entradas[i]);
+    }
+  }
 
   free(tabela->entradas);
   free(tabela);
 }
 
 void print_tabela(T_SIMBOLO* tabela){
+  if(!DEBUG_MODE)
+    return;
+
   for(int i = 0; i < tabela->maxEntradas; i++)
-    if(tabela->entradas[i] == NULL)
-      printf("%d) NULL\n", i);
+    if(tabela->entradas[i] == NULL){
+      printf("%d) ", i);
+      printf("\033[0;31mNULL\n\033[0m");
+    }
     else
-      printf("%d) %s\n", i, tabela->entradas[i]->valor.valTokStr);
+      printf("%d) %s\n", i, tabela->entradas[i]->idName);
 }
