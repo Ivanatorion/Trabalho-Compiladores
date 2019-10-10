@@ -3,6 +3,7 @@
 #include <string.h>
 #include "include/defines.h"
 #include "include/arvore.h"
+#include "include/tabela.h"
 
 int yylex(void);
 void yyerror (char const *s);
@@ -10,6 +11,9 @@ int get_line_number();
 
 void exporta(void *head);
 void libera(void *head);
+
+//Tabela de simbolos
+void addSimbolo(struct valLex valorL, int tipo, int tipo_id);
 
 %}
 
@@ -102,6 +106,8 @@ TK_PR_STATIC TK_PR_CONST TK_PR_INT TK_PR_CHAR TK_PR_FLOAT TK_PR_BOOL TK_PR_STRIN
 TK_PR_RETURN TK_PR_BREAK TK_PR_IF TK_PR_FOR TK_PR_WHILE TK_PR_CONTINUE
 '+' '-' '*' '/' '!' '?' '&' '#' '%' '|' '^' '<' '>' ':' '=' '(' ')' '[' ']'
 
+%type<int> primType staticType
+
 /* menor precedência */
 %right '?' ':'
 %left TK_OC_OR
@@ -123,7 +129,7 @@ programa: declVarGlobal programa {$$ = $2; arvore = $$;};
 programa: declFunc programa {$$ = $1; addFilho($$, $2); arvore = $$;};
 programa: {$$ = NULL; arvore = $$;};
 
-declVarGlobal: staticType TK_IDENTIFICADOR ';' {free($2.valTokStr);}
+declVarGlobal: staticType TK_IDENTIFICADOR ';' { free($2.valTokStr);}
 |        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' {free($2.valTokStr);};
 
 staticType: TK_PR_STATIC primType
@@ -235,7 +241,6 @@ forComando: blocoComando {$$ = $1;}
 |           comandoAtrib {$$ = $1;}
 |           comandoShift {$$ = $1;};
 
-
 expr: operando {$$ = $1;}
 |     '(' expr ')' {$$ = $2;}
 |     '+' expr     {$$ = createNode($1, 2); $$->valor_lexico.valTokStr = strdup("+"); addFilho($$, $2);} %prec UNARY_PLUS
@@ -286,7 +291,7 @@ void exporta(void *head) {
   printf("AST:\n\n");
   printArvore(head, 0);
   printf("\n\nTabela de Símbolos:\n");
-  // print_tabela(?);
+  print_tabela(tabelaSimbolos);
   printf("\n");
   /* fim dos prints de debugging */
 
@@ -297,4 +302,19 @@ void exporta(void *head) {
 
 void libera(void *head) {
   libera_arvore((NODO_ARVORE*) head);
+}
+
+void addSimbolo(struct valLex valorL, int tipo, int tipo_id){
+  S_INFO sInfo;
+
+  sInfo.linha = valorL.line_number;
+  sInfo.tipo = tipo;
+
+  if(valorL.tipo_token == TT_ID){
+    sInfo.natureza = NATUREZA_IDENTIFICADOR;
+    sInfo.idName = valorL.valTokStr;
+    sInfo.tipo_identificador = tipo_id;
+  }
+
+  insere_tabela(tabelaSimbolos, sInfo);
 }

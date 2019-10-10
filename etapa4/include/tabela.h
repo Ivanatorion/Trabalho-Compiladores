@@ -18,6 +18,8 @@ typedef struct simbolo_info{
   int tipo;
   int tamanho;
 
+  int tipo_identificador; //Variavel, vetor, funcao
+
   ARG_LIST* argList;
   int nArgs;
 
@@ -39,6 +41,8 @@ typedef struct tabela_s{
 
   S_INFO **entradas;
 } T_SIMBOLO;
+
+extern T_SIMBOLO* tabelaSimbolos;
 
 T_SIMBOLO* make_tabela();
 

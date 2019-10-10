@@ -17,6 +17,6 @@
 #define TL_FLOAT 4
 #define TL_BOOL 5
 
-#define NT_LITERAL 0
-#define NT_VARIAVEL 1
-#define NT_FUNCAO 2
+#define TID_VAR 0
+#define TID_VET 1
+#define TID_FUNC 2
