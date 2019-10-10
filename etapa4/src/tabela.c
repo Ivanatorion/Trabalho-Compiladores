@@ -136,6 +136,32 @@ void free_tabela(T_SIMBOLO* tabela){
   free(tabela);
 }
 
+void free_tabela_recursive(T_SIMBOLO* tabela){
+  if(tabela->prox != NULL)
+    tabela->prox->ant = tabela->ant;
+
+  if(tabela->ant != NULL)
+    tabela->ant->prox = tabela->prox;
+
+  for(int i = 0; i < tabela->maxEntradas; i++){
+    if(tabela->entradas[i] != NULL){
+      if(tabela->entradas[i]->natureza == NATUREZA_IDENTIFICADOR)
+        free(tabela->entradas[i]->idName);
+
+      free(tabela->entradas[i]);
+    }
+  }
+
+  free(tabela->entradas);
+
+  if(tabela->ant != NULL)
+    free_tabela_recursive(tabela->ant);
+  else if(tabela->prox != NULL)
+    free_tabela_recursive(tabela->prox);
+
+  free(tabela);
+}
+
 void print_tabela(T_SIMBOLO* tabela){
   if(!DEBUG_MODE)
     return;
@@ -145,6 +171,44 @@ void print_tabela(T_SIMBOLO* tabela){
       printf("%d) ", i);
       printf("\033[0;31mNULL\n\033[0m");
     }
-    else
-      printf("%d) %s\n", i, tabela->entradas[i]->idName);
+    else{
+      printf("%d) %s ( ", i, tabela->entradas[i]->idName);
+      switch (tabela->entradas[i]->natureza) {
+        case NATUREZA_IDENTIFICADOR:
+          printf("Identificador - ");
+          switch (tabela->entradas[i]->tipo_identificador) {
+            case TID_VAR:
+              printf("Variavel | ");
+              break;
+            case TID_FUNC:
+              printf("Funcao() | ");
+              break;
+            case TID_VET:
+              printf("Vetor | ");
+              break;
+          }
+          break;
+      }
+      printf("Linha: %d | ", tabela->entradas[i]->linha);
+      printf("Tipo: ");
+      switch (tabela->entradas[i]->tipo.tipoPrim) {
+        case TL_INT:
+          printf("int");
+          break;
+        case TL_FLOAT:
+          printf("float");
+          break;
+        case TL_BOOL:
+          printf("bool");
+          break;
+        case TL_CHAR:
+          printf("char");
+          break;
+        case TL_STRING:
+          printf("string");
+          break;
+      }
+
+      printf(")\n");
+    }
 }

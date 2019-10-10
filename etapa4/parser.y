@@ -13,7 +13,7 @@ void exporta(void *head);
 void libera(void *head);
 
 //Tabela de simbolos
-void addSimbolo(struct valLex valorL, int tipo, int tipo_id);
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id);
 
 %}
 
@@ -40,11 +40,18 @@ void addSimbolo(struct valLex valorL, int tipo, int tipo_id);
     struct valLex valor_lexico;
   } NODO_ARVORE;
 
+  typedef struct tipo_composto{
+    int tipoPrim;
+    int isStatic;
+    int isConst;
+  } TIPO_COMPOSTO;
+
 }
 
 %union {
   struct valLex valor_lexico;
   NODO_ARVORE* nodo_arvore;
+  TIPO_COMPOSTO tipoComposto;
 }
 
 %define parse.error verbose
@@ -106,7 +113,7 @@ TK_PR_STATIC TK_PR_CONST TK_PR_INT TK_PR_CHAR TK_PR_FLOAT TK_PR_BOOL TK_PR_STRIN
 TK_PR_RETURN TK_PR_BREAK TK_PR_IF TK_PR_FOR TK_PR_WHILE TK_PR_CONTINUE
 '+' '-' '*' '/' '!' '?' '&' '#' '%' '|' '^' '<' '>' ':' '=' '(' ')' '[' ']'
 
-%type<int> primType staticType
+%type<tipoComposto> primType staticType
 
 /* menor precedência */
 %right '?' ':'
@@ -129,17 +136,17 @@ programa: declVarGlobal programa {$$ = $2; arvore = $$;};
 programa: declFunc programa {$$ = $1; addFilho($$, $2); arvore = $$;};
 programa: {$$ = NULL; arvore = $$;};
 
-declVarGlobal: staticType TK_IDENTIFICADOR ';' { free($2.valTokStr);}
-|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' {free($2.valTokStr);};
+declVarGlobal: staticType TK_IDENTIFICADOR ';' { addSimbolo($2, $1, TID_VAR); free($2.valTokStr);}
+|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' { addSimbolo($2, $1, TID_VET); free($2.valTokStr);};
 
-staticType: TK_PR_STATIC primType
-|            primType;
+staticType: TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
+|            primType {$$ = $1;};
 
-primType: TK_PR_INT
-| TK_PR_CHAR
-| TK_PR_BOOL
-| TK_PR_STRING
-| TK_PR_FLOAT;
+primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
+| TK_PR_CHAR {$$ = (TIPO_COMPOSTO) {TL_CHAR, 0, 0};}
+| TK_PR_BOOL {$$ = (TIPO_COMPOSTO) {TL_BOOL, 0, 0};}
+| TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
+| TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
 declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' blocoComando {$$ = createNode($2, 2); addFilho($$, $6);};
 
@@ -304,7 +311,7 @@ void libera(void *head) {
   libera_arvore((NODO_ARVORE*) head);
 }
 
-void addSimbolo(struct valLex valorL, int tipo, int tipo_id){
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id){
   S_INFO sInfo;
 
   sInfo.linha = valorL.line_number;

@@ -1,6 +1,7 @@
 #ifndef TABELA_S
 #define TABELA_S
 
+#include "../parser.tab.h"
 #include "defines.h"
 
 #define INIT_MAX_ENTRADAS 8
@@ -15,7 +16,7 @@ typedef struct argl{
 typedef struct simbolo_info{
   int linha;
   int natureza;
-  int tipo;
+  TIPO_COMPOSTO tipo;
   int tamanho;
 
   int tipo_identificador; //Variavel, vetor, funcao
@@ -47,6 +48,8 @@ extern T_SIMBOLO* tabelaSimbolos;
 T_SIMBOLO* make_tabela();
 
 void free_tabela(T_SIMBOLO* tabela);
+
+void free_tabela_recursive(T_SIMBOLO* tabela);
 
 //Retorna codigos de erro
 int insere_tabela(T_SIMBOLO* tabela, S_INFO info);

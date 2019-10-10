@@ -16,6 +16,8 @@ int main (int argc, char **argv)
   exporta (arvore);
   libera(arvore);
   arvore = NULL;
+  free_tabela_recursive(tabelaSimbolos);
+  tabelaSimbolos = NULL;
   yylex_destroy();
   return ret;
 }
