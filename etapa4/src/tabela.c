@@ -40,12 +40,27 @@ T_SIMBOLO* make_tabela(){
   return novaTabela;
 }
 
-void pushEscopo(T_SIMBOLO* tabela){
+void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais){
   while(tabela->prox != NULL)
     tabela = tabela->prox;
 
   tabela->prox = make_tabela();
   tabela->prox->ant = tabela;
+
+  //Insere as entradas iniciais
+  tabela = tabela->prox;
+  S_INFO sInfo;
+  sInfo.linha = 0;
+  sInfo.natureza = NATUREZA_IDENTIFICADOR;
+  sInfo.tipo_identificador = TID_VAR;
+  sInfo.argList = NULL;
+
+  while(iniciais != NULL){
+    sInfo.idName = iniciais->arg;
+    sInfo.tipo = iniciais->tipoArg;
+    insere_tabela(tabela, sInfo);
+    iniciais = iniciais->prox;
+  }
 }
 
 void popEscopo(T_SIMBOLO* tabela){
