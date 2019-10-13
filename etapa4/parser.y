@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "include/defines.h"
 #include "include/arvore.h"
 #include "include/tabela.h"
@@ -12,8 +13,11 @@ int get_line_number();
 void exporta(void *head);
 void libera(void *head);
 
+//Erros
+void printErro(int erro);
+
 //Tabela de simbolos
-void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id);
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args);
 
 %}
 
@@ -38,6 +42,8 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id);
     int nFilhosMax;
 
     struct valLex valor_lexico;
+
+    int tipo;
   } NODO_ARVORE;
 
   typedef struct tipo_composto{
@@ -46,12 +52,20 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id);
     int isConst;
   } TIPO_COMPOSTO;
 
+  typedef struct argl{
+    struct argl *prox;
+
+    char *arg;
+    TIPO_COMPOSTO tipoArg;
+  } ARG_LIST;
+
 }
 
 %union {
   struct valLex valor_lexico;
   NODO_ARVORE* nodo_arvore;
   TIPO_COMPOSTO tipoComposto;
+  ARG_LIST* argList;
 }
 
 %define parse.error verbose
@@ -113,7 +127,9 @@ TK_PR_STATIC TK_PR_CONST TK_PR_INT TK_PR_CHAR TK_PR_FLOAT TK_PR_BOOL TK_PR_STRIN
 TK_PR_RETURN TK_PR_BREAK TK_PR_IF TK_PR_FOR TK_PR_WHILE TK_PR_CONTINUE
 '+' '-' '*' '/' '!' '?' '&' '#' '%' '|' '^' '<' '>' ':' '=' '(' ')' '[' ']'
 
-%type<tipoComposto> primType staticType
+%type<tipoComposto> primType staticType tipoVarLocal
+
+%type<argList> listaParams parametro
 
 /* menor precedência */
 %right '?' ':'
@@ -136,8 +152,8 @@ programa: declVarGlobal programa {$$ = $2; arvore = $$;};
 programa: declFunc programa {$$ = $1; addFilho($$, $2); arvore = $$;};
 programa: {$$ = NULL; arvore = $$;};
 
-declVarGlobal: staticType TK_IDENTIFICADOR ';' { addSimbolo($2, $1, TID_VAR); free($2.valTokStr);}
-|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' { addSimbolo($2, $1, TID_VET); free($2.valTokStr);};
+declVarGlobal: staticType TK_IDENTIFICADOR ';' { addSimbolo($2, $1, TID_VAR, NULL); free($2.valTokStr);}
+|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' { addSimbolo($2, $1, TID_VET, NULL); free($2.valTokStr);};
 
 staticType: TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
 |            primType {$$ = $1;};
@@ -148,16 +164,16 @@ primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
 | TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
 | TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' blocoComando {$$ = createNode($2, 2); addFilho($$, $6);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComando {$$ = createNode($2, 2); addFilho($$, $7);};
 
-listaParams: parametro
-|            parametro ',' listaParams
-| ;
+listaParams: parametro {$$ = $1; $$->prox = NULL;}
+|            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
+| {$$ = NULL;};
 
-parametro: TK_PR_CONST primType TK_IDENTIFICADOR {free($3.valTokStr);}
-|          primType TK_IDENTIFICADOR {free($2.valTokStr);} ;
+parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); free($3.valTokStr);}
+|          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); free($2.valTokStr);} ;
 
-blocoComando: '{' listaComandos '}' {$$ = $2;} ;
+blocoComando: '{' {pushEscopo(tabelaSimbolos);} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;
@@ -173,14 +189,14 @@ comando: blocoComando {$$ = $1;}
 |        comandoContinue ';' {$$ = $1;}
 |        comandoControleFluxo {$$ = $1;};
 
-declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {$$ = NULL; free($2.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
+declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = NULL; free($2.valTokStr);}
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
 
-tipoVarLocal: primType
-|             TK_PR_STATIC primType
-|             TK_PR_CONST primType
-|             TK_PR_STATIC TK_PR_CONST primType;
+tipoVarLocal: primType {$$ = $1;}
+|             TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
+|             TK_PR_CONST primType {$$ = $2; $$.isConst = 1;}
+|             TK_PR_STATIC TK_PR_CONST primType {$$ = $3; $$.isStatic = 1; $$.isConst = 1;};
 
 literal: TK_LIT_INT { $$ = createNode($1, 1);}
 |        TK_LIT_CHAR { $$ = createNode($1, 1);}
@@ -311,11 +327,25 @@ void libera(void *head) {
   libera_arvore((NODO_ARVORE*) head);
 }
 
-void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id){
+void printErro(int erro){
+  printf("Erro: ");
+  switch(erro){
+    case ERR_DECLARED:
+      printf("Redeclaracao de Identificador");
+      break;
+    case ERR_UNDECLARED:
+      printf("Identificador nao declarado");
+      break;
+  }
+  printf("\n");
+}
+
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args){
   S_INFO sInfo;
 
   sInfo.linha = valorL.line_number;
   sInfo.tipo = tipo;
+  sInfo.argList = args;
 
   if(valorL.tipo_token == TT_ID){
     sInfo.natureza = NATUREZA_IDENTIFICADOR;
@@ -323,5 +353,10 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id){
     sInfo.tipo_identificador = tipo_id;
   }
 
-  insere_tabela(tabelaSimbolos, sInfo);
+  int ret = insere_tabela(tabelaSimbolos, sInfo);
+
+  if(ret != 0){
+    printErro(ret);
+    exit(ret);
+  }
 }

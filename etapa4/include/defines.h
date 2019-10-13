@@ -10,6 +10,7 @@
 #define TT_ID 3
 #define TT_LIT 4
 
+#define TL_UNKNOWN -1
 #define TL_NONE 0
 #define TL_INT 1
 #define TL_CHAR 2

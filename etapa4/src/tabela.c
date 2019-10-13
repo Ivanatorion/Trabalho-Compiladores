@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+int isPrime(int n){
+  for(int i = 2; i < n/2; i++)
+    if(n%i == 0)
+      return 0;
+
+  return 1;
+}
+
 unsigned long hash(char* str){
   //djb2
   //http://www.cse.yorku.ca/~oz/hash.html
@@ -32,10 +40,31 @@ T_SIMBOLO* make_tabela(){
   return novaTabela;
 }
 
+void pushEscopo(T_SIMBOLO* tabela){
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
+  tabela->prox = make_tabela();
+  tabela->prox->ant = tabela;
+}
+
+void popEscopo(T_SIMBOLO* tabela){
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
+  free_tabela(tabela);
+}
+
 int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
   if(tabela->nEntradas == tabela->maxEntradas){
     //Resize
     tabela->maxEntradas = tabela->maxEntradas * 2;
+    while(!isPrime(tabela->maxEntradas))
+      tabela->maxEntradas++;
+
     S_INFO **entradasNovas = (S_INFO**) malloc(sizeof(S_INFO*) * tabela->maxEntradas);
 
     for(int i = 0; i < tabela->maxEntradas; i++)
@@ -72,6 +101,14 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
 
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;
+
+  //Atualiza nArgs
+  ARG_LIST* auxPointer = entrada->argList;
+  entrada->nArgs = 0;
+  while(auxPointer != NULL){
+    entrada->nArgs++;
+    auxPointer = auxPointer->prox;
+  }
 
   if(entrada->natureza == NATUREZA_IDENTIFICADOR)
     entrada->idName = strdup(entrada->idName);
@@ -148,6 +185,18 @@ void free_tabela_recursive(T_SIMBOLO* tabela){
       if(tabela->entradas[i]->natureza == NATUREZA_IDENTIFICADOR)
         free(tabela->entradas[i]->idName);
 
+      if(tabela->entradas[i]->argList != NULL){
+        ARG_LIST* auxPointer = tabela->entradas[i]->argList->prox;
+        while(auxPointer != NULL){
+          free(tabela->entradas[i]->argList->arg);
+          free(tabela->entradas[i]->argList);
+          tabela->entradas[i]->argList = auxPointer;
+          auxPointer = auxPointer->prox;
+        }
+        free(tabela->entradas[i]->argList->arg);
+        free(tabela->entradas[i]->argList);
+      }
+
       free(tabela->entradas[i]);
     }
   }
@@ -166,6 +215,9 @@ void print_tabela(T_SIMBOLO* tabela){
   if(!DEBUG_MODE)
     return;
 
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
   for(int i = 0; i < tabela->maxEntradas; i++)
     if(tabela->entradas[i] == NULL){
       printf("%d) ", i);
@@ -181,7 +233,7 @@ void print_tabela(T_SIMBOLO* tabela){
               printf("Variavel | ");
               break;
             case TID_FUNC:
-              printf("Funcao() | ");
+              printf("Funcao() %d Args | ", tabela->entradas[i]->nArgs);
               break;
             case TID_VET:
               printf("Vetor | ");

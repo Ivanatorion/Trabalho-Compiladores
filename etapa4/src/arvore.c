@@ -17,6 +17,7 @@ NODO_ARVORE* createNode(struct valLex valor, int nFilhosMax){
     nodo->filhos = NULL;
 
   nodo->valor_lexico = valor;
+  nodo->tipo = TL_UNKNOWN;
   return nodo;
 }
 
@@ -36,6 +37,10 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
     pai->filhos[i] = filho;
     pai->nFilhos++;
   }
+}
+
+void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
+  
 }
 
 void format(int spaces) {

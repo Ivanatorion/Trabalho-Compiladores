@@ -4,14 +4,7 @@
 #include "../parser.tab.h"
 #include "defines.h"
 
-#define INIT_MAX_ENTRADAS 8
-
-typedef struct argl{
-  struct argl *prox;
-
-  char *arg;
-  int tipoArg;
-} ARG_LIST;
+#define INIT_MAX_ENTRADAS 11
 
 typedef struct simbolo_info{
   int linha;
@@ -46,6 +39,10 @@ typedef struct tabela_s{
 extern T_SIMBOLO* tabelaSimbolos;
 
 T_SIMBOLO* make_tabela();
+
+void pushEscopo(T_SIMBOLO* tabela);
+
+void popEscopo(T_SIMBOLO* tabela);
 
 void free_tabela(T_SIMBOLO* tabela);
 
