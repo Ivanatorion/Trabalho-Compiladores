@@ -207,7 +207,7 @@ literal: TK_LIT_INT { $$ = createNode($1, 1);}
 |        TK_LIT_FLOAT { $$ = createNode($1, 1);}
 |        TK_LIT_STRING { $$ = createNode($1, 1);};
 
-comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
+comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3); infere_tipos($$, tabelaSimbolos);}
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
                                                           addFilho($$, createNode($2, 2));
                                                           $$->filhos[0]->valor_lexico.valTokStr = strdup("[]");
@@ -312,13 +312,13 @@ void yyerror (char const *s) {
 
 void exporta(void *head) {
 
-  /* prints de debugging */
-  printf("AST:\n\n");
-  printArvore(head, 0);
-  printf("\n\nTabela de Símbolos:\n");
-  print_tabela(tabelaSimbolos);
-  printf("\n");
-  /* fim dos prints de debugging */
+  if(DEBUG_MODE){
+    printf("AST:\n\n");
+    printArvore(head, 0);
+    printf("\n\nTabela de Símbolos:\n");
+    print_tabela(tabelaSimbolos);
+    printf("\n");
+  }
 
   FILE *fp = fopen("e3.csv", "w");
 
@@ -350,9 +350,6 @@ void printErro(int erro){
   switch(erro){
     case ERR_DECLARED:
       printf("Redeclaracao de Identificador");
-      break;
-    case ERR_UNDECLARED:
-      printf("Identificador nao declarado");
       break;
   }
   printf("\n");

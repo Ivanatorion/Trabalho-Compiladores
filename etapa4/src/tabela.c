@@ -136,34 +136,42 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
 }
 
 int consulta_tabela(T_SIMBOLO* tabela, char* chave, S_INFO* info){
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
   if(DEBUG_MODE)
     printf("\033[0;32m\nProcurando por: %s\n\033[0m", chave);
 
-  int posicao = hash(chave) % tabela->maxEntradas;
+  int posicao, verificados;
+  while(tabela != NULL){
+    posicao = hash(chave) % tabela->maxEntradas;
 
-  int verificados = 0;
-  while(tabela->entradas[posicao] != NULL && verificados != tabela->nEntradas){
-    verificados++;
-
-    if(DEBUG_MODE)
-      printf("\033[0;32m%d) %s\n\033[0m", verificados, tabela->entradas[posicao]->idName);
-
-    if(!strcmp(chave, tabela->entradas[posicao]->idName)){
-      *info = *(tabela->entradas[posicao]);
+    verificados = 0;
+    while(tabela->entradas[posicao] != NULL && verificados != tabela->nEntradas){
+      verificados++;
 
       if(DEBUG_MODE)
-        printf("\033[0;32mEncontrou %s depois de %d verificacoes\n\n\033[0m", chave, verificados);
+        printf("\033[0;32m%d) %s\n\033[0m", verificados, tabela->entradas[posicao]->idName);
 
-      return 0;
+      if(!strcmp(chave, tabela->entradas[posicao]->idName)){
+        *info = *(tabela->entradas[posicao]);
+
+        if(DEBUG_MODE)
+          printf("\033[0;32mEncontrou %s depois de %d verificacoes\n\n\033[0m", chave, verificados);
+
+        return 0;
+      }
+
+      posicao++;
+      if(posicao == tabela->maxEntradas)
+        posicao = 0;
     }
 
-    posicao++;
-    if(posicao == tabela->maxEntradas)
-      posicao = 0;
-  }
+    if(DEBUG_MODE)
+      printf("\033[0;32mNao encontrou %s. Verificados %d.\n\n\033[0m", chave, verificados+1);
 
-  if(DEBUG_MODE)
-    printf("\033[0;32mNao encontrou %s. Verificados %d.\n\n\033[0m", chave, verificados+1);
+    tabela = tabela->ant;
+  }
 
   return ERR_UNDECLARED;
 }

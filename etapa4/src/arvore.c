@@ -40,7 +40,21 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
 }
 
 void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
-  
+  if(arvore == NULL || arvore->tipo != TL_UNKNOWN)
+    return;
+
+  for(int i = 0; i < arvore->nFilhosMax; i++)
+    infere_tipos(arvore->filhos[i], tabela);
+
+  S_INFO sInfo;
+  if(arvore->valor_lexico.tipo_token == TT_ID){
+    if(consulta_tabela(tabela, arvore->valor_lexico.valTokStr, &sInfo) == ERR_UNDECLARED){
+      printf("Erro: Identificador nao declarado (%s)\n", arvore->valor_lexico.valTokStr);
+      exit(ERR_UNDECLARED);
+    }
+
+    arvore->tipo = sInfo.tipo.tipoPrim;
+  }
 }
 
 void format(int spaces) {
