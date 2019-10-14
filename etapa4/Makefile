@@ -12,4 +12,4 @@ clean:
 	rm -rf *.o *~ etapa4
 	rm -rf lex.yy.*
 	rm -rf parser.tab.*
-	rm -rf e4.csv
+	rm -rf e3.csv

@@ -180,7 +180,7 @@ blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo); listaArgsNov
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;
 
-comando: blocoComando {$$ = $1;}
+comando: blocoComando ';' {$$ = $1;}
 |        declVarLocal {$$ = $1;}
 |        comandoAtrib ';' {$$ = $1;}
 |        comandoEntradaSaida {$$ = NULL;}
@@ -189,7 +189,7 @@ comando: blocoComando {$$ = $1;}
 |        comandoReturn ';' {$$ = $1;}
 |        comandoBreak ';' {$$ = $1;}
 |        comandoContinue ';' {$$ = $1;}
-|        comandoControleFluxo {$$ = $1;};
+|        comandoControleFluxo ';' {$$ = $1;};
 
 declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = NULL; free($2.valTokStr);}
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
@@ -320,8 +320,24 @@ void exporta(void *head) {
   printf("\n");
   /* fim dos prints de debugging */
 
-  FILE *fp = fopen("e4.csv", "w");
-  exporta_arvore((NODO_ARVORE*) head, fp);
+  FILE *fp = fopen("e3.csv", "w");
+
+  NODO_ARVORE* raiz = (NODO_ARVORE*) head;
+
+  int filhosNotNullRaiz = 0;
+
+  if(raiz != NULL){
+    for(int i = 0; i < raiz->nFilhosMax; i++)
+      if(raiz->filhos[i] != NULL)
+        filhosNotNullRaiz++;
+
+    if(filhosNotNullRaiz == 0)
+      fprintf(fp, "%p, \n", raiz);
+  }
+
+  if(filhosNotNullRaiz > 0)
+    exporta_arvore(raiz, fp);
+
   fclose(fp);
 }
 
