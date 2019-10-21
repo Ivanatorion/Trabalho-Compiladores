@@ -200,14 +200,14 @@ tipoVarLocal: primType {$$ = $1;}
 |             TK_PR_CONST primType {$$ = $2; $$.isConst = 1;}
 |             TK_PR_STATIC TK_PR_CONST primType {$$ = $3; $$.isStatic = 1; $$.isConst = 1;};
 
-literal: TK_LIT_INT { $$ = createNode($1, 1);}
-|        TK_LIT_CHAR { $$ = createNode($1, 1);}
-|        TK_LIT_TRUE { $$ = createNode($1, 1);}
-|        TK_LIT_FALSE { $$ = createNode($1, 1);}
-|        TK_LIT_FLOAT { $$ = createNode($1, 1);}
-|        TK_LIT_STRING { $$ = createNode($1, 1);};
+literal: TK_LIT_INT { $$ = createNode($1, 1); $$->tipo = TL_INT;}
+|        TK_LIT_CHAR { $$ = createNode($1, 1); $$->tipo = TL_CHAR;}
+|        TK_LIT_TRUE { $$ = createNode($1, 1); $$->tipo = TL_BOOL;}
+|        TK_LIT_FALSE { $$ = createNode($1, 1); $$->tipo = TL_BOOL;}
+|        TK_LIT_FLOAT { $$ = createNode($1, 1); $$->tipo = TL_FLOAT;}
+|        TK_LIT_STRING { $$ = createNode($1, 1); $$->tipo = TL_STRING;};
 
-comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3); infere_tipos($$, tabelaSimbolos);}
+comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
                                                           addFilho($$, createNode($2, 2));
                                                           $$->filhos[0]->valor_lexico.valTokStr = strdup("[]");

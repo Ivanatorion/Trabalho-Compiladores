@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 NODO_ARVORE* createNode(struct valLex valor, int nFilhosMax){
   NODO_ARVORE *nodo = malloc(sizeof(NODO_ARVORE));
@@ -54,7 +55,101 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     }
 
     arvore->tipo = sInfo.tipo.tipoPrim;
+
+    return;
   }
+
+  int isBinExp = 0, isUnExp = 0;
+  const char binExps[10][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">"};
+  const char unExps[7][10] = {"+", "-", "!", "&", "*", "?", "#"};
+
+  for(int i = 0; i < 10; i++)
+    if(!strcmp(arvore->valor_lexico.valTokStr, binExps[i]))
+      isBinExp = 1;
+
+  if(isBinExp && !(arvore->nFilhosMax == 3))
+    isBinExp = 0;
+
+  for(int i = 0; i < 7; i++)
+    if(!strcmp(arvore->valor_lexico.valTokStr, unExps[i]) && !isBinExp)
+      isUnExp = 1;
+
+  printf("Lul: %s\n", arvore->valor_lexico.valTokStr);
+  if(isBinExp){
+    printf("Bin %s\n", arvore->valor_lexico.valTokStr);
+    int tipo1 = arvore->filhos[0]->tipo;
+    int tipo2 = arvore->filhos[1]->tipo;
+
+    if(tipo1 == TL_INT && tipo2 == TL_INT)
+      arvore->tipo = TL_INT;
+    else if(tipo1 == TL_FLOAT && tipo2 == TL_FLOAT)
+      arvore->tipo = TL_FLOAT;
+    else if(tipo1 == TL_BOOL && tipo2 == TL_BOOL)
+      arvore->tipo = TL_BOOL;
+    else if((tipo1 == TL_FLOAT && tipo2 == TL_INT) || (tipo1 == TL_INT && tipo2 == TL_FLOAT))
+      arvore->tipo = TL_FLOAT;
+    else if((tipo1 == TL_BOOL && tipo2 == TL_INT) || (tipo1 == TL_INT && tipo2 == TL_BOOL))
+      arvore->tipo = TL_INT;
+    else if((tipo1 == TL_BOOL && tipo2 == TL_FLOAT) || (tipo1 == TL_FLOAT && tipo2 == TL_BOOL))
+      arvore->tipo = TL_FLOAT;
+    else{
+      printf("Erro: Operacao %s aplicada em operandos de tipos incompatíveis", arvore->valor_lexico.valTokStr);
+      if(tipo1 == TL_CHAR || tipo2 == TL_CHAR)
+        exit(ERR_CHAR_TO_X);
+      if(tipo1 == TL_STRING || tipo2 == TL_STRING)
+        exit(ERR_STRING_TO_X);
+    }
+
+    return;
+  }
+
+  if(isUnExp){
+    int tipo1 = arvore->filhos[0]->tipo;
+    arvore->tipo = tipo1;
+    return;
+  }
+
+  //Vetores
+  if(!strcmp(arvore->valor_lexico.valTokStr, "[]")){
+    consulta_tabela(tabela, arvore->filhos[0]->valor_lexico.valTokStr, &sInfo);
+    if(sInfo.tipo_identificador == TID_VAR){
+      printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como variavel\n", arvore->valor_lexico.line_number, arvore->filhos[0]->valor_lexico.valTokStr);
+      exit(ERR_VARIABLE);
+    }
+    if(sInfo.tipo_identificador == TID_FUNC){
+      printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como funcao\n", arvore->valor_lexico.line_number, arvore->filhos[0]->valor_lexico.valTokStr);
+      exit(ERR_FUNCTION);
+    }
+    if(arvore->filhos[1]->tipo != TL_INT){
+      printf("Erro (Linha %d): O tipo do indice de um vetor deve ser int\n", arvore->valor_lexico.line_number);
+      exit(ERR_WRONG_TYPE);
+    }
+
+    arvore->tipo = arvore->filhos[0]->tipo;
+    return;
+  }
+
+  //Atribuicoes
+  if(!strcmp(arvore->valor_lexico.valTokStr, "=")){
+    int tipo1 = arvore->filhos[0]->tipo;
+    int tipo2 = arvore->filhos[1]->tipo;
+
+    if(tipo1 != tipo2){
+        if(tipo1 == TL_FLOAT && (tipo2 == TL_BOOL || tipo2 == TL_INT))
+          arvore->tipo = TL_FLOAT;
+        else if(tipo1 == TL_INT && tipo2 == TL_BOOL)
+          arvore->tipo = TL_INT;
+        else{
+          printf("Erro (Linha %d): Atribuicao de tipos incompativeis\n", arvore->valor_lexico.line_number);
+          exit(ERR_WRONG_TYPE);
+        }
+    }
+    else
+      arvore->tipo = tipo1;
+
+    return;
+  }
+
 }
 
 void format(int spaces) {
@@ -102,7 +197,30 @@ void printArvore(NODO_ARVORE* arvore, int spaces){
     }
   }
   else{
-    printf("(%s)", arvore->valor_lexico.valTokStr);
+    printf("(%s) - Tipo: ", arvore->valor_lexico.valTokStr);
+    switch (arvore->tipo) {
+      case TL_INT:
+        printf("int");
+        break;
+      case TL_FLOAT:
+        printf("float");
+        break;
+      case TL_BOOL:
+        printf("bool");
+        break;
+      case TL_STRING:
+        printf("string");
+        break;
+      case TL_CHAR:
+        printf("char");
+        break;
+      case TL_NONE:
+        printf("none / void");
+        break;
+      case TL_UNKNOWN:
+        printf("?");
+        break;
+    }
   }
 
   for(int i = 0; i < arvore->nFilhosMax; i++){
