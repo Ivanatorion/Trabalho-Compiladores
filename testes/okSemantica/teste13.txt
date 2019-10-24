@@ -1,0 +1,51 @@
+/* Teste 13
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+static int vec[30];
+
+/* Função que faz sorting de um vetor de inteiros */
+int bubble_sort(int n)
+{
+	int i;
+	int j;
+	int aux;
+
+	for(i=0 : i<n-1 : i=i+1) {
+		for(j=0 : j<n-i-1 : j=j+1) {
+			// se maior, faz swap
+			if(vec[j] > vec[j+1]) {
+				aux = vec[i];
+				vec[i] = vec[j];
+				vec[j] = aux;
+			}	;
+		} ;
+	} ;
+
+	return 0;
+}
+
+int v[10];    // pois variáveis locais não permitem vetores
+
+int main() {
+
+	v[0] = 10;
+	v[1] = 3;
+	v[2] = 55;
+	v[3] = 2;
+	v[4] = 9;
+	v[5] = 1;
+	v[6] = 2;
+	v[7] = 6;
+	v[8] = 8;
+	v[9] = 33;
+
+	bubble_sort(10);
+
+	output v[0];
+	output v[9];
+
+	return 0;
+}

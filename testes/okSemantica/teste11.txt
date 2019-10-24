@@ -1,0 +1,34 @@
+/* Teste 11
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+char dec(char c) {}
+char inc(char c) {}
+
+float xyz;
+
+int main()
+{
+	/* Comentários multi-linha
+	 * dentro de
+	 * de uma função
+	 */
+
+	char a <= '2';
+	char b <= '3';
+
+	output inc(a) + dec(b);
+
+	return 0;
+}
+
+bool b;
+string my_str;
+
+float sum(float x, float y) {
+	return x+y;
+}
+
+int k;     // Inicialização de globais não é possível nesta linguagem

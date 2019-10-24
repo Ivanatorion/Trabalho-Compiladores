@@ -126,6 +126,25 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
       posicao = 0;
   }
 
+  //Atualiza o tamanho da Variavel
+  switch(info.tipo.tipoPrim){
+    case TL_CHAR:
+      info.tamanho = 1;
+      break;
+    case TL_STRING:
+      info.tamanho = 0; //??
+      break;
+    case TL_INT:
+      info.tamanho = 4;
+      break;
+    case TL_FLOAT:
+      info.tamanho = 8;
+      break;
+    case TL_BOOL:
+      info.tamanho = 1;
+      break;
+  }
+
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;
 
@@ -189,6 +208,9 @@ int consulta_tabela(T_SIMBOLO* tabela, char* chave, S_INFO* info){
 }
 
 void free_tabela(T_SIMBOLO* tabela){
+  if(tabela == NULL)
+    return;
+
   if(tabela->prox != NULL)
     tabela->prox->ant = tabela->ant;
 
@@ -209,6 +231,9 @@ void free_tabela(T_SIMBOLO* tabela){
 }
 
 void free_tabela_recursive(T_SIMBOLO* tabela){
+  if(tabela == NULL)
+    return;
+
   if(tabela->prox != NULL)
     tabela->prox->ant = tabela->ant;
 
@@ -247,7 +272,7 @@ void free_tabela_recursive(T_SIMBOLO* tabela){
 }
 
 void print_tabela(T_SIMBOLO* tabela){
-  if(!DEBUG_MODE)
+  if(!DEBUG_MODE || tabela == NULL)
     return;
 
   while(tabela->prox != NULL)

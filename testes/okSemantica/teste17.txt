@@ -1,0 +1,23 @@
+/* Teste 17
+ * Trabalho de Compiladores
+ * Ivan e Marcelo
+ * Programa OK
+ */
+
+int f2() {
+	return 2;
+}
+
+int f1() {
+	f2();
+	return 1;
+}
+
+int main() {
+	char x <= 'a';
+
+	f1();
+
+	x = 'z';
+	return 0;
+}

@@ -18,7 +18,7 @@ int main() {
    }
    else {
       int flag2;
-      flag2 = 2 - flag2;    //Identificador nao declarado (Sem problemas agora)
+      flag2 = 2 - flag2;
       return !flag2;
    } ;
 

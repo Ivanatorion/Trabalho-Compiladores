@@ -22,6 +22,8 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST*
 ARG_LIST* listaArgsNovoEscopo;
 TIPO_COMPOSTO tipoNovoEscopo;
 
+T_SIMBOLO* tabelaSimbolos = NULL;
+
 %}
 
 %code requires {
@@ -344,6 +346,8 @@ void exporta(void *head) {
 
 void libera(void *head) {
   libera_arvore((NODO_ARVORE*) head);
+  free_tabela_recursive(tabelaSimbolos);
+  tabelaSimbolos = NULL;
 }
 
 void printErro(int erro){
@@ -357,6 +361,9 @@ void printErro(int erro){
 }
 
 void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args){
+  if(tabelaSimbolos == NULL)
+    tabelaSimbolos = make_tabela();
+
   S_INFO sInfo;
 
   sInfo.linha = valorL.line_number;

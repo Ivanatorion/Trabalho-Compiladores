@@ -53,7 +53,7 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   S_INFO sInfo;
   if(arvore->valor_lexico.tipo_token == TT_ID){
     if(consulta_tabela(tabela, arvore->valor_lexico.valTokStr, &sInfo) == ERR_UNDECLARED){
-      printf("Erro: Identificador nao declarado (%s)\n", arvore->valor_lexico.valTokStr);
+      printf("Erro (Linha %d): Identificador nao declarado (%s)\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
       exit(ERR_UNDECLARED);
     }
 
@@ -100,10 +100,10 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   }
 
   int isBinExp = 0, isUnExp = 0;
-  const char binExps[12][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">", "<=", ">="};
+  const char binExps[14][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">", "<=", ">=", "==", "!="};
   const char unExps[7][10] = {"+", "-", "!", "&", "*", "?", "#"};
 
-  for(int i = 0; i < 12; i++)
+  for(int i = 0; i < 14; i++)
     if(!strcmp(arvore->valor_lexico.valTokStr, binExps[i]))
       isBinExp = 1;
 
@@ -130,8 +130,12 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
       arvore->tipo = TL_INT;
     else if((tipo1 == TL_BOOL && tipo2 == TL_FLOAT) || (tipo1 == TL_FLOAT && tipo2 == TL_BOOL))
       arvore->tipo = TL_FLOAT;
+    else if(tipo1 == TL_CHAR && tipo2 == TL_CHAR)
+      arvore->tipo = TL_CHAR;
+    else if(tipo1 == TL_STRING && tipo2 == TL_STRING)
+      arvore->tipo = TL_STRING;
     else{
-      printf("Erro: Operacao %s aplicada em operandos de tipos incompativeis", arvore->valor_lexico.valTokStr);
+      printf("Erro (Linha %d): Operacao %s aplicada em operandos de tipos incompativeis", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
       if(tipo1 == TL_CHAR || tipo2 == TL_CHAR)
         exit(ERR_CHAR_TO_X);
       if(tipo1 == TL_STRING || tipo2 == TL_STRING)
@@ -139,7 +143,9 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     }
 
     //Excessoes
-    if(!strcmp(arvore->valor_lexico.valTokStr, ">") || !strcmp(arvore->valor_lexico.valTokStr, "<") || !strcmp(arvore->valor_lexico.valTokStr, "<=") || !strcmp(arvore->valor_lexico.valTokStr, ">=")){
+    if(!strcmp(arvore->valor_lexico.valTokStr, ">") || !strcmp(arvore->valor_lexico.valTokStr, "<")
+    || !strcmp(arvore->valor_lexico.valTokStr, "<=") || !strcmp(arvore->valor_lexico.valTokStr, ">=")
+    || !strcmp(arvore->valor_lexico.valTokStr, "==") || !strcmp(arvore->valor_lexico.valTokStr, "!=")){
       arvore->tipo = TL_BOOL;
     }
 
@@ -149,6 +155,53 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   if(isUnExp){
     int tipo1 = arvore->filhos[0]->tipo;
     arvore->tipo = tipo1;
+    return;
+  }
+
+  //Operador ternario
+  if(!strcmp(arvore->valor_lexico.valTokStr, "?:")){
+    if(arvore->filhos[0]->tipo != TL_BOOL){
+      printf("Erro (Linha %d): Primeiro operando do operador ternario deve ser BOOL\n", arvore->valor_lexico.line_number);
+      exit(ERR_WRONG_TYPE);
+    }
+    if(arvore->filhos[1]->tipo != arvore->filhos[2]->tipo){
+      printf("Erro (Linha %d): Expressoes do operador ternario devem ter o mesmo tipo\n", arvore->valor_lexico.line_number);
+      exit(ERR_WRONG_TYPE);
+    }
+    arvore->tipo = arvore->filhos[1]->tipo;
+    return;
+  }
+
+  //If e While
+  if(!strcmp(arvore->valor_lexico.valTokStr, "if") || !strcmp(arvore->valor_lexico.valTokStr, "while")){
+    if(arvore->filhos[0]->tipo != TL_BOOL){
+      printf("Erro (Linha %d): Teste do \"%s\" deve ser do tipo BOOL\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+      exit(ERR_WRONG_TYPE);
+    }
+
+    arvore->tipo = TL_NONE;
+    return;
+  }
+
+  //For
+  if(!strcmp(arvore->valor_lexico.valTokStr, "for")){
+    if(arvore->filhos[1]->tipo != TL_BOOL){
+      printf("Erro (Linha %d): Teste do \"%s\" deve ser do tipo BOOL\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+      exit(ERR_WRONG_TYPE);
+    }
+
+    arvore->tipo = TL_NONE;
+    return;
+  }
+
+  //Shifts
+  if(!strcmp(arvore->valor_lexico.valTokStr, "<<") || !strcmp(arvore->valor_lexico.valTokStr, ">>")){
+    if(arvore->filhos[1]->tipo != TL_INT){
+      printf("Erro (Linha %d): Deslocamento do shift deve ser inteiro\n", arvore->valor_lexico.line_number);
+      exit(ERR_WRONG_TYPE);
+    }
+
+    arvore->tipo = TL_NONE;
     return;
   }
 
@@ -193,12 +246,20 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     return;
   }
 
+  //Comando break e continue
+  if(!strcmp(arvore->valor_lexico.valTokStr, "break") || !strcmp(arvore->valor_lexico.valTokStr, "continue")){
+  
+    arvore->tipo = TL_NONE;
+  }
+
   //Comando return
   if(!strcmp(arvore->valor_lexico.valTokStr, "return")){
     if(arvore->filhos[0]->tipo != getTipoUltimaFuncao(tabela)){
       printf("Erro (Linha %d): Retorno de tipo incorreto\n", arvore->valor_lexico.line_number);
       exit(ERR_WRONG_PAR_RETURN);
     }
+
+    arvore->tipo = TL_NONE;
   }
 
 }

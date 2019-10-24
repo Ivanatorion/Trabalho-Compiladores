@@ -1,0 +1,20 @@
+/* Teste 15
+ * Trabalho de Compiladores
+ * Ivan e Marcelo
+ * Programa OK
+ */
+
+int n[5];
+
+int main() {
+
+	int a <= 0;
+	
+	a = a + n[0];
+	a = a + n[1];
+	a = a + n[2];
+	a = a + n[3];
+	a = a + n[4];
+
+	return 0;
+}

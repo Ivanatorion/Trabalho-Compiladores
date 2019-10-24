@@ -1,0 +1,34 @@
+/* Teste 14
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+
+int main()
+{
+	int i <= 0;
+	int j <= 1;
+	int k <= 2;
+	int ans;
+
+	output i;
+	output j;
+	output k;
+
+	// comandos simples não devem ser terminados por ;
+	for(i=0 : i<10 : i=i+1)
+	{
+		for(j=0 : j<10 : j=j+2)
+		{
+			for(k=0 : k<10 : k=k+1)
+			{
+				if(j%k == 0) {
+					ans = ans + i * (j | k);
+				} ;
+			} ;
+		} ;
+	} ;
+
+	return 0;
+}

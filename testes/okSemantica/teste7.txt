@@ -1,0 +1,30 @@
+/* Teste 7
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+static int x;
+int y;
+
+int main() {
+
+	x = 0;
+	y = 0;
+
+	while(x<5) do {
+
+		while(y<10) do {
+			if(y == 2) {
+				continue;
+			} ;
+			y = y+1;
+		} ;
+		y=0;
+		x = x+1;
+	} ;
+
+	output x;
+
+	return 0;
+}

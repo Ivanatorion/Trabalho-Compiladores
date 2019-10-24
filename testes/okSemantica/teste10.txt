@@ -1,0 +1,26 @@
+/* Teste 10
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+int print()
+{
+	output "OK";
+	return 255;
+}
+
+int main()
+{
+	int a;
+	a = print() < print();
+
+
+	// Nesta linguagem, não pode fazer:
+	// print() < print();
+	// sem algum comando. As expressões estão
+	// dentro de um comando
+
+
+	return 3;
+}

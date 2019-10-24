@@ -1,0 +1,30 @@
+/* Teste 3
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+char vowels[5];       // define vogais
+
+int inc(int i) {
+	return i+1;
+}
+
+int numbers[10];
+
+
+// comentario no inicio
+int dec(const char i)
+{
+	int j <= 2;
+	j = (i == 'c') ? 1 - j : j;
+	j = j - 1;
+	return j;
+}
+
+int main() {
+	/*incrementa e decrementa */
+	inc(2);
+	dec('2');
+	return 0;
+}

@@ -1,0 +1,33 @@
+/* Teste 12
+* Trabalho de Compiladores
+* Ivan e Marcelo
+* Programa OK
+*/
+
+
+int do_nothing()
+{
+	// apenas brincando com o pareamento das chaves
+	{
+		{} ;
+
+		{
+			{} ;
+			{	} ;
+			{
+
+			} ;
+		}	;
+	}	;
+
+
+	return 0;
+}
+
+int main()
+{
+	do_nothing();
+
+
+	return 0;
+}
