@@ -41,11 +41,14 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
 }
 
 void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
-  if(arvore == NULL || arvore->tipo != TL_UNKNOWN)
+  if(arvore == NULL)
     return;
 
   for(int i = 0; i < arvore->nFilhosMax; i++)
     infere_tipos(arvore->filhos[i], tabela);
+
+  if(arvore->tipo != TL_UNKNOWN)
+    return;
 
   S_INFO sInfo;
   if(arvore->valor_lexico.tipo_token == TT_ID){
@@ -56,14 +59,51 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
     arvore->tipo = sInfo.tipo.tipoPrim;
 
+    //Funcao
+    if(sInfo.tipo_identificador == TID_FUNC){
+      if(arvore->nFilhosMax != 2){
+        printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como funcao\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+        exit(ERR_FUNCTION);
+      }
+
+      int nArgsArvore = 0;
+      NODO_ARVORE* contador = arvore->filhos[0];
+      while(contador != NULL){
+        nArgsArvore++;
+        contador = contador->filhos[contador->nFilhosMax - 1];
+      }
+
+      if(nArgsArvore < sInfo.nArgs){
+        printf("Erro (Linha %d): Sem argumentos suficientes para a funcao \"%s\"\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+        exit(ERR_MISSING_ARGS);
+      }
+
+      if(nArgsArvore > sInfo.nArgs){
+        printf("Erro (Linha %d): Excesso de argumentos para a funcao \"%s\"\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+        exit(ERR_EXCESS_ARGS);
+      }
+
+      ARG_LIST *cursor;
+      contador = arvore->filhos[0];
+      cursor = sInfo.argList;
+      for(int i = 0; i < nArgsArvore; i++){
+        if(contador->tipo != cursor->tipoArg.tipoPrim){
+          printf("Erro (Linha %d): Argumentos de tipos diferentes para a funcao \"%s\"\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+          exit(ERR_WRONG_TYPE_ARGS);
+        }
+        cursor = cursor->prox;
+        contador = contador->filhos[contador->nFilhosMax - 1];
+      }
+    }
+
     return;
   }
 
   int isBinExp = 0, isUnExp = 0;
-  const char binExps[10][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">"};
+  const char binExps[12][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">", "<=", ">="};
   const char unExps[7][10] = {"+", "-", "!", "&", "*", "?", "#"};
 
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < 12; i++)
     if(!strcmp(arvore->valor_lexico.valTokStr, binExps[i]))
       isBinExp = 1;
 
@@ -74,9 +114,7 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     if(!strcmp(arvore->valor_lexico.valTokStr, unExps[i]) && !isBinExp)
       isUnExp = 1;
 
-  printf("Lul: %s\n", arvore->valor_lexico.valTokStr);
   if(isBinExp){
-    printf("Bin %s\n", arvore->valor_lexico.valTokStr);
     int tipo1 = arvore->filhos[0]->tipo;
     int tipo2 = arvore->filhos[1]->tipo;
 
@@ -93,11 +131,16 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     else if((tipo1 == TL_BOOL && tipo2 == TL_FLOAT) || (tipo1 == TL_FLOAT && tipo2 == TL_BOOL))
       arvore->tipo = TL_FLOAT;
     else{
-      printf("Erro: Operacao %s aplicada em operandos de tipos incompatíveis", arvore->valor_lexico.valTokStr);
+      printf("Erro: Operacao %s aplicada em operandos de tipos incompativeis", arvore->valor_lexico.valTokStr);
       if(tipo1 == TL_CHAR || tipo2 == TL_CHAR)
         exit(ERR_CHAR_TO_X);
       if(tipo1 == TL_STRING || tipo2 == TL_STRING)
         exit(ERR_STRING_TO_X);
+    }
+
+    //Excessoes
+    if(!strcmp(arvore->valor_lexico.valTokStr, ">") || !strcmp(arvore->valor_lexico.valTokStr, "<") || !strcmp(arvore->valor_lexico.valTokStr, "<=") || !strcmp(arvore->valor_lexico.valTokStr, ">=")){
+      arvore->tipo = TL_BOOL;
     }
 
     return;
@@ -148,6 +191,14 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
       arvore->tipo = tipo1;
 
     return;
+  }
+
+  //Comando return
+  if(!strcmp(arvore->valor_lexico.valTokStr, "return")){
+    if(arvore->filhos[0]->tipo != getTipoUltimaFuncao(tabela)){
+      printf("Erro (Linha %d): Retorno de tipo incorreto\n", arvore->valor_lexico.line_number);
+      exit(ERR_WRONG_PAR_RETURN);
+    }
   }
 
 }

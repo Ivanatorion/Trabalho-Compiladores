@@ -20,6 +20,7 @@ void printErro(int erro);
 void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args);
 
 ARG_LIST* listaArgsNovoEscopo;
+TIPO_COMPOSTO tipoNovoEscopo;
 
 %}
 
@@ -166,7 +167,7 @@ primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
 | TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
 | TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4;} ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComando {$$ = createNode($2, 2); addFilho($$, $8);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComando {$$ = createNode($2, 2); addFilho($$, $8);};
 
 listaParams: parametro {$$ = $1; $$->prox = NULL;}
 |            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
@@ -175,7 +176,7 @@ listaParams: parametro {$$ = $1; $$->prox = NULL;}
 parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); free($3.valTokStr);}
 |          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); free($2.valTokStr);} ;
 
-blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo); listaArgsNovoEscopo = NULL;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;

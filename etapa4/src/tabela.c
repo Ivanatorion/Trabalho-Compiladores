@@ -40,12 +40,14 @@ T_SIMBOLO* make_tabela(){
   return novaTabela;
 }
 
-void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais){
+void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT){
   while(tabela->prox != NULL)
     tabela = tabela->prox;
 
   tabela->prox = make_tabela();
   tabela->prox->ant = tabela;
+
+  tabela->prox->tipoFuncaoTabela = tipoFuncaoT;
 
   //Insere as entradas iniciais
   tabela = tabela->prox;
@@ -68,6 +70,16 @@ void popEscopo(T_SIMBOLO* tabela){
     tabela = tabela->prox;
 
   free_tabela(tabela);
+}
+
+int getTipoUltimaFuncao(T_SIMBOLO* tabela){
+  while(tabela->prox != NULL)
+    tabela = tabela->prox;
+
+  while(tabela->tipoFuncaoTabela.tipoPrim == TL_NONE)
+    tabela = tabela->ant;
+
+  return tabela->tipoFuncaoTabela.tipoPrim;
 }
 
 int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
@@ -257,6 +269,32 @@ void print_tabela(T_SIMBOLO* tabela){
               break;
             case TID_FUNC:
               printf("Funcao() %d Args | ", tabela->entradas[i]->nArgs);
+              ARG_LIST* cursor = tabela->entradas[i]->argList;
+              while(cursor != NULL){
+                printf("Arg %s ", cursor->arg);
+
+                printf("Tipo: ");
+                switch (cursor->tipoArg.tipoPrim) {
+                  case TL_INT:
+                    printf("int");
+                    break;
+                  case TL_FLOAT:
+                    printf("float");
+                    break;
+                  case TL_BOOL:
+                    printf("bool");
+                    break;
+                  case TL_CHAR:
+                    printf("char");
+                    break;
+                  case TL_STRING:
+                    printf("string");
+                    break;
+                }
+                printf(" | ");
+                cursor = cursor->prox;
+              }
+
               break;
             case TID_VET:
               printf("Vetor | ");
