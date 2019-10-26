@@ -128,8 +128,10 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
   while(tabela->entradas[posicao] != NULL){
 
     if(!strcmp(tabela->entradas[posicao]->idName, info.idName)){
-        if(info.natureza == NATUREZA_IDENTIFICADOR)
-          return ERR_DECLARED;
+        if(info.natureza == NATUREZA_IDENTIFICADOR){
+          printf("Erro (Linha %d): Redeclaracao do identificador \"%s\". Declarado anteriormente na Linha %d\n", info.linha, info.idName, tabela->entradas[posicao]->linha);
+          exit(ERR_DECLARED);
+        }
 
         //Literal
         tabela->entradas[posicao]->linha = info.linha;

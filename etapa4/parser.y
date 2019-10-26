@@ -13,9 +13,6 @@ int get_line_number();
 void exporta(void *head);
 void libera(void *head);
 
-//Erros
-void printErro(int erro);
-
 //Tabela de simbolos
 void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args);
 
@@ -351,16 +348,6 @@ void libera(void *head) {
   tabelaSimbolos = NULL;
 }
 
-void printErro(int erro){
-  printf("Erro: ");
-  switch(erro){
-    case ERR_DECLARED:
-      printf("Redeclaracao de Identificador");
-      break;
-  }
-  printf("\n");
-}
-
 void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args){
   if(tabelaSimbolos == NULL)
     tabelaSimbolos = make_tabela();
@@ -412,12 +399,7 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST*
     sInfo.idName = litToString;
   }
 
-  int ret = insere_tabela(tabelaSimbolos, sInfo);
+  insere_tabela(tabelaSimbolos, sInfo);
 
   free(litToString);
-
-  if(ret != 0){
-    printErro(ret);
-    exit(ret);
-  }
 }
