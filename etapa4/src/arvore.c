@@ -230,15 +230,42 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     int tipo1 = arvore->filhos[0]->tipo;
     int tipo2 = arvore->filhos[1]->tipo;
 
+    char tipo1S[20], tipo2S[20];
+    switch (tipo1) {
+      case TL_FLOAT:
+        sprintf(tipo1S, "float");
+        break;
+      case TL_INT:
+        sprintf(tipo1S, "int");
+        break;
+      case TL_BOOL:
+        sprintf(tipo1S, "bool");
+        break;
+    }
+    switch (tipo2) {
+      case TL_FLOAT:
+        sprintf(tipo2S, "float");
+        break;
+      case TL_INT:
+        sprintf(tipo2S, "int");
+        break;
+      case TL_BOOL:
+        sprintf(tipo2S, "bool");
+        break;
+    }
+
     if(tipo1 != tipo2){
         if(tipo1 == TL_FLOAT && (tipo2 == TL_BOOL || tipo2 == TL_INT))
           arvore->tipo = TL_FLOAT;
-        else if(tipo1 == TL_INT && tipo2 == TL_BOOL)
+        else if(tipo1 == TL_INT && (tipo2 == TL_BOOL || tipo2 == TL_FLOAT))
           arvore->tipo = TL_INT;
+        else if(tipo1 == TL_BOOL && (tipo2 == TL_FLOAT || tipo2 == TL_INT))
+          arvore->tipo = TL_BOOL;
         else{
           printf("Erro (Linha %d): Atribuicao de tipos incompativeis\n", arvore->valor_lexico.line_number);
           exit(ERR_WRONG_TYPE);
         }
+        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo2S, tipo1S);
     }
     else
       arvore->tipo = tipo1;
@@ -248,7 +275,7 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
   //Comando break e continue
   if(!strcmp(arvore->valor_lexico.valTokStr, "break") || !strcmp(arvore->valor_lexico.valTokStr, "continue")){
-  
+
     arvore->tipo = TL_NONE;
   }
 

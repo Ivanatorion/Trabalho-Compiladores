@@ -17,12 +17,7 @@ typedef struct simbolo_info{
   ARG_LIST* argList;
   int nArgs;
 
-  union{
-    char *idName;
-    int litIntVal;
-    int litBoolVal;
-    float litFloatVal;
-  };
+  char *idName;
 
 } S_INFO;
 

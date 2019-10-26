@@ -60,6 +60,7 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
   while(iniciais != NULL){
     sInfo.idName = iniciais->arg;
     sInfo.tipo = iniciais->tipoArg;
+    sInfo.linha = iniciais->linhaArg;
     insere_tabela(tabela, sInfo);
     iniciais = iniciais->prox;
   }
@@ -83,8 +84,16 @@ int getTipoUltimaFuncao(T_SIMBOLO* tabela){
 }
 
 int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
-  while(tabela->prox != NULL)
-    tabela = tabela->prox;
+  //Se for identificador, insere no escopo mais profundo
+  if(info.natureza == NATUREZA_IDENTIFICADOR){
+    while(tabela->prox != NULL)
+      tabela = tabela->prox;
+  }
+  //Se for literal, insere no escopo global
+  else{
+    while(tabela->ant != NULL)
+      tabela = tabela->ant;
+  }
 
   if(tabela->nEntradas == tabela->maxEntradas){
     //Resize
@@ -118,8 +127,34 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
 
   while(tabela->entradas[posicao] != NULL){
 
-    if(!strcmp(tabela->entradas[posicao]->idName, info.idName))
-      return ERR_DECLARED;
+    if(!strcmp(tabela->entradas[posicao]->idName, info.idName)){
+        if(info.natureza == NATUREZA_IDENTIFICADOR)
+          return ERR_DECLARED;
+
+        //Literal
+        tabela->entradas[posicao]->linha = info.linha;
+        tabela->entradas[posicao]->tipo = info.tipo;
+        tabela->entradas[posicao]->natureza = info.natureza;
+        //Atualiza o tamanho da Variavel
+        switch(info.tipo.tipoPrim){
+          case TL_CHAR:
+            info.tamanho = 1;
+            break;
+          case TL_STRING:
+            info.tamanho = strlen(info.idName + 1);
+            break;
+          case TL_INT:
+            info.tamanho = 4;
+            break;
+          case TL_FLOAT:
+            info.tamanho = 8;
+            break;
+          case TL_BOOL:
+            info.tamanho = 1;
+            break;
+        }
+        return 0;
+    }
 
     posicao++;
     if(posicao == tabela->maxEntradas)
@@ -156,8 +191,7 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
     auxPointer = auxPointer->prox;
   }
 
-  if(entrada->natureza == NATUREZA_IDENTIFICADOR)
-    entrada->idName = strdup(entrada->idName);
+  entrada->idName = strdup(entrada->idName);
 
   tabela->entradas[posicao] = entrada;
 
@@ -219,8 +253,7 @@ void free_tabela(T_SIMBOLO* tabela){
 
   for(int i = 0; i < tabela->maxEntradas; i++){
     if(tabela->entradas[i] != NULL){
-      if(tabela->entradas[i]->natureza == NATUREZA_IDENTIFICADOR)
-        free(tabela->entradas[i]->idName);
+      free(tabela->entradas[i]->idName);
 
       free(tabela->entradas[i]);
     }
@@ -242,8 +275,7 @@ void free_tabela_recursive(T_SIMBOLO* tabela){
 
   for(int i = 0; i < tabela->maxEntradas; i++){
     if(tabela->entradas[i] != NULL){
-      if(tabela->entradas[i]->natureza == NATUREZA_IDENTIFICADOR)
-        free(tabela->entradas[i]->idName);
+      free(tabela->entradas[i]->idName);
 
       if(tabela->entradas[i]->argList != NULL){
         ARG_LIST* auxPointer = tabela->entradas[i]->argList->prox;
@@ -325,6 +357,21 @@ void print_tabela(T_SIMBOLO* tabela){
               printf("Vetor | ");
               break;
           }
+          break;
+        case NATUREZA_LITERAL_INT:
+          printf("Literal int | ");
+          break;
+        case NATUREZA_LITERAL_CHAR:
+          printf("Literal char | ");
+          break;
+        case NATUREZA_LITERAL_FLOAT:
+          printf("Literal float | ");
+          break;
+        case NATUREZA_LITERAL_BOOL:
+          printf("Literal bool | ");
+          break;
+        case NATUREZA_LITERAL_STRING:
+          printf("Literal string | ");
           break;
       }
       printf("Linha: %d | ", tabela->entradas[i]->linha);

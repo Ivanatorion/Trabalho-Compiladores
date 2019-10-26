@@ -62,6 +62,7 @@ T_SIMBOLO* tabelaSimbolos = NULL;
 
     char *arg;
     TIPO_COMPOSTO tipoArg;
+    int linhaArg;
   } ARG_LIST;
 
 }
@@ -175,8 +176,8 @@ listaParams: parametro {$$ = $1; $$->prox = NULL;}
 |            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
 | {$$ = NULL;};
 
-parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); free($3.valTokStr);}
-|          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); free($2.valTokStr);} ;
+parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); $$->linhaArg = $3.line_number; free($3.valTokStr);}
+|          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); $$->linhaArg = $2.line_number; free($2.valTokStr);} ;
 
 blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
@@ -203,12 +204,12 @@ tipoVarLocal: primType {$$ = $1;}
 |             TK_PR_CONST primType {$$ = $2; $$.isConst = 1;}
 |             TK_PR_STATIC TK_PR_CONST primType {$$ = $3; $$.isStatic = 1; $$.isConst = 1;};
 
-literal: TK_LIT_INT { $$ = createNode($1, 1); $$->tipo = TL_INT;}
-|        TK_LIT_CHAR { $$ = createNode($1, 1); $$->tipo = TL_CHAR;}
-|        TK_LIT_TRUE { $$ = createNode($1, 1); $$->tipo = TL_BOOL;}
-|        TK_LIT_FALSE { $$ = createNode($1, 1); $$->tipo = TL_BOOL;}
-|        TK_LIT_FLOAT { $$ = createNode($1, 1); $$->tipo = TL_FLOAT;}
-|        TK_LIT_STRING { $$ = createNode($1, 1); $$->tipo = TL_STRING;};
+literal: TK_LIT_INT { $$ = createNode($1, 1); $$->tipo = TL_INT; addSimbolo($1, (TIPO_COMPOSTO) {TL_INT, 0, 0}, -1, NULL);}
+|        TK_LIT_CHAR { $$ = createNode($1, 1); $$->tipo = TL_CHAR; addSimbolo($1, (TIPO_COMPOSTO) {TL_CHAR, 0, 0}, -1, NULL);}
+|        TK_LIT_TRUE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL);}
+|        TK_LIT_FALSE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL);}
+|        TK_LIT_FLOAT { $$ = createNode($1, 1); $$->tipo = TL_FLOAT; addSimbolo($1, (TIPO_COMPOSTO) {TL_FLOAT, 0, 0}, -1, NULL);}
+|        TK_LIT_STRING { $$ = createNode($1, 1); $$->tipo = TL_STRING; addSimbolo($1, (TIPO_COMPOSTO) {TL_STRING, 0, 0}, -1, NULL);};
 
 comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
 |             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
@@ -369,14 +370,51 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST*
   sInfo.linha = valorL.line_number;
   sInfo.tipo = tipo;
   sInfo.argList = args;
+  sInfo.tipo_identificador = tipo_id;
+
+  char *litToString = malloc(1000);
 
   if(valorL.tipo_token == TT_ID){
     sInfo.natureza = NATUREZA_IDENTIFICADOR;
     sInfo.idName = valorL.valTokStr;
-    sInfo.tipo_identificador = tipo_id;
+  }else if(valorL.tipo_token == TT_LIT){
+
+    switch(valorL.tipo_literal){
+      case TL_INT:
+        sInfo.natureza = NATUREZA_LITERAL_INT;
+        sprintf(litToString, "%d", valorL.valTokInt);
+        break;
+      case TL_CHAR:
+        sInfo.natureza = NATUREZA_LITERAL_CHAR;
+        sprintf(litToString, "%c", valorL.valTokChar);
+        break;
+      case TL_BOOL:
+        sInfo.natureza = NATUREZA_LITERAL_BOOL;
+        if(valorL.valTokBool == 0)
+          sprintf(litToString, "false");
+        else
+          sprintf(litToString, "true");
+        break;
+      case TL_FLOAT:
+        sInfo.natureza = NATUREZA_LITERAL_FLOAT;
+        sprintf(litToString, "%f", valorL.valTokFloat);
+        break;
+      case TL_STRING:
+        sInfo.natureza = NATUREZA_LITERAL_STRING;
+        if(strlen(valorL.valTokStr) >= 999){
+          free(litToString);
+          litToString = malloc(strlen(valorL.valTokStr) + 1);
+        }
+        sprintf(litToString, "%s", valorL.valTokStr);
+        break;
+    }
+
+    sInfo.idName = litToString;
   }
 
   int ret = insere_tabela(tabelaSimbolos, sInfo);
+
+  free(litToString);
 
   if(ret != 0){
     printErro(ret);
