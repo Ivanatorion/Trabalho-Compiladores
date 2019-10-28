@@ -104,7 +104,7 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 {litFloat} { setYyVal(TT_LIT, TL_FLOAT); RET_TOK( TK_LIT_FLOAT ); }
 
 \'.\' { setYyVal(TT_LIT, TL_CHAR); RET_TOK(TK_LIT_CHAR); }
-\'.*\' { RET_TOK( TOKEN_ERRO ); }
+\'.. { RET_TOK( TOKEN_ERRO ); }
 \".*\" { setYyVal(TT_LIT, TL_STRING); RET_TOK(TK_LIT_STRING); }
 
 {litInt}.?{identificador} { RET_TOK(TOKEN_ERRO); }

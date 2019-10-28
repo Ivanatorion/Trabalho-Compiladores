@@ -21,6 +21,8 @@ TIPO_COMPOSTO tipoNovoEscopo;
 
 T_SIMBOLO* tabelaSimbolos = NULL;
 
+struct valLex DUMB_VALEX;
+
 %}
 
 %code requires {
@@ -120,7 +122,7 @@ T_SIMBOLO* tabelaSimbolos = NULL;
 %token TOKEN_ERRO
 %start programa
 
-%type<nodo_arvore> programa declFunc declVarLocal literal operando expr comandoFuncExpr listaArgs argumento blocoComando comando
+%type<nodo_arvore> programa declFunc declVarLocal literal operando expr comandoFuncExpr listaArgs argumento blocoComando blocoComandoFun comando
 comandoAtrib comandoBreak comandoShift comandoReturn comandoContinue comandoChamadaFunc comandoControleFluxo listaComandos listaForComandos forComando
 
 %type<valor_lexico> TK_IDENTIFICADOR TK_LIT_INT TK_LIT_CHAR TK_LIT_FLOAT
@@ -167,7 +169,7 @@ primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
 | TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
 | TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComando {$$ = createNode($2, 2); addFilho($$, $8);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComandoFun {$$ = createNode($2, 2); addFilho($$, $8);};
 
 listaParams: parametro {$$ = $1; $$->prox = NULL;}
 |            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
@@ -176,7 +178,8 @@ listaParams: parametro {$$ = $1; $$->prox = NULL;}
 parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); $$->linhaArg = $3.line_number; free($3.valTokStr);}
 |          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); $$->linhaArg = $2.line_number; free($2.valTokStr);} ;
 
-blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComandoFun: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = createNode(DUMB_VALEX, 1); addFilho($$, $3); $$->valor_lexico.valTokStr = strdup("{}"); print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;
@@ -316,9 +319,8 @@ void exporta(void *head) {
   if(DEBUG_MODE){
     printf("AST:\n\n");
     printArvore(head, 0);
-    printf("\n\nTabela de Símbolos:\n");
+    printf("\n\nTabela de Símbolos Global:\n");
     print_tabela(tabelaSimbolos);
-    printf("\n");
   }
 
   FILE *fp = fopen("e3.csv", "w");

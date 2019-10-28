@@ -4,6 +4,10 @@
 //Mudar para "0" antes de entregar
 #define DEBUG_MODE 0
 
+//Testes semanticos adicionais que nao estao na especificacao da E4
+//Mas o grupo achou interessante adicionar
+#define ADDITIONAL_SEMANTIC_TESTS 0
+
 #define TT_PR 0
 #define TT_CE 1
 #define TT_OC 2

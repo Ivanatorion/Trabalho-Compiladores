@@ -233,9 +233,16 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
     return;
   }
 
+  //Bloco
+  if(!strcmp(arvore->valor_lexico.valTokStr, "{}")){
+    arvore->tipo = TL_NONE;
+    return;
+  }
+
   //If e While
   if(!strcmp(arvore->valor_lexico.valTokStr, "if") || !strcmp(arvore->valor_lexico.valTokStr, "while")){
-    if(arvore->filhos[0]->tipo != TL_BOOL){
+
+    if(ADDITIONAL_SEMANTIC_TESTS && arvore->filhos[0]->tipo != TL_BOOL){
       printf("Erro (Linha %d): Teste do \"%s\" deve ser do tipo BOOL\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
       exit(ERR_WRONG_TYPE);
     }
@@ -246,7 +253,8 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
 
   //For
   if(!strcmp(arvore->valor_lexico.valTokStr, "for")){
-    if(arvore->filhos[1]->tipo != TL_BOOL){
+
+    if(ADDITIONAL_SEMANTIC_TESTS && arvore->filhos[1]->tipo != TL_BOOL){
       printf("Erro (Linha %d): Teste do \"%s\" deve ser do tipo BOOL\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
       exit(ERR_WRONG_TYPE);
     }
@@ -257,7 +265,8 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
 
   //Shifts
   if(!strcmp(arvore->valor_lexico.valTokStr, "<<") || !strcmp(arvore->valor_lexico.valTokStr, ">>")){
-    if(arvore->filhos[1]->tipo != TL_INT){
+
+    if(ADDITIONAL_SEMANTIC_TESTS && arvore->filhos[1]->tipo != TL_INT){
       printf("Erro (Linha %d): Deslocamento do shift deve ser inteiro\n", arvore->valor_lexico.line_number);
       exit(ERR_WRONG_TYPE);
     }
@@ -277,7 +286,8 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
       printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como funcao\n", arvore->valor_lexico.line_number, arvore->filhos[0]->valor_lexico.valTokStr);
       exit(ERR_FUNCTION);
     }
-    if(arvore->filhos[1]->tipo != TL_INT){
+    
+    if(ADDITIONAL_SEMANTIC_TESTS && arvore->filhos[1]->tipo != TL_INT){
       printf("Erro (Linha %d): O tipo do indice de um vetor deve ser int\n", arvore->valor_lexico.line_number);
       exit(ERR_WRONG_TYPE);
     }

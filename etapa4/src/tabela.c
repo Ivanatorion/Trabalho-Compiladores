@@ -397,4 +397,6 @@ void print_tabela(T_SIMBOLO* tabela){
 
       printf(")\n");
     }
+
+    printf("\n");
 }
