@@ -52,9 +52,8 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
   //Insere as entradas iniciais
   tabela = tabela->prox;
   S_INFO sInfo;
-  sInfo.linha = 0;
   sInfo.natureza = NATUREZA_IDENTIFICADOR;
-  sInfo.tipo_identificador = TID_VAR;
+  sInfo.tipoIdentificador = TID_VAR;
   sInfo.argList = NULL;
 
   while(iniciais != NULL){
@@ -143,7 +142,7 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
             info.tamanho = 1;
             break;
           case TL_STRING:
-            info.tamanho = strlen(info.idName + 1);
+            info.tamanho = strlen(info.idName) + 1;
             break;
           case TL_INT:
             info.tamanho = 4;
@@ -322,7 +321,7 @@ void print_tabela(T_SIMBOLO* tabela){
       switch (tabela->entradas[i]->natureza) {
         case NATUREZA_IDENTIFICADOR:
           printf("Identificador - ");
-          switch (tabela->entradas[i]->tipo_identificador) {
+          switch (tabela->entradas[i]->tipoIdentificador) {
             case TID_VAR:
               printf("Variavel | ");
               break;

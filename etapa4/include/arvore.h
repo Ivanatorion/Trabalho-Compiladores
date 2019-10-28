@@ -12,7 +12,7 @@ NODO_ARVORE* createNode(struct valLex valor, int nFilhosMax);
 
 void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho);
 
-void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela);
+void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela);
 
 void libera_arvore(NODO_ARVORE* arvore);
 void exporta_arvore(NODO_ARVORE* arvore, FILE* fp);

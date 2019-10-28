@@ -2,7 +2,7 @@
 #include "naturezas.h"
 
 //Mudar para "0" antes de entregar
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 #define TT_PR 0
 #define TT_CE 1

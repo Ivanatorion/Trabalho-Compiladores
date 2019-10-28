@@ -40,12 +40,12 @@ void addFilho(NODO_ARVORE* pai, NODO_ARVORE* filho){
   }
 }
 
-void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
+void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela){
   if(arvore == NULL)
     return;
 
   for(int i = 0; i < arvore->nFilhosMax; i++)
-    infere_tipos(arvore->filhos[i], tabela);
+    infere_tipos(arvore->filhos[i], arvore, tabela);
 
   if(arvore->tipo != TL_UNKNOWN)
     return;
@@ -59,8 +59,22 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
     arvore->tipo = sInfo.tipo.tipoPrim;
 
+    //Variavel
+    if(sInfo.tipoIdentificador == TID_VAR){
+      if(arvore->nFilhosMax == 2){
+        printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como variavel\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+        exit(ERR_VARIABLE);
+      }
+    }
+
+    //Vetores
+    if(sInfo.tipoIdentificador == TID_VET && (arvorePai == NULL || strcmp(arvorePai->valor_lexico.valTokStr, "[]") != 0)){
+      printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como vetor\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+      exit(ERR_VECTOR);
+    }
+
     //Funcao
-    if(sInfo.tipo_identificador == TID_FUNC){
+    if(sInfo.tipoIdentificador == TID_FUNC){
       if(arvore->nFilhosMax != 2){
         printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como funcao\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
         exit(ERR_FUNCTION);
@@ -135,7 +149,7 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
     else if(tipo1 == TL_STRING && tipo2 == TL_STRING)
       arvore->tipo = TL_STRING;
     else{
-      printf("Erro (Linha %d): Operacao %s aplicada em operandos de tipos incompativeis", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+      printf("Erro (Linha %d): Operacao %s aplicada em operandos de tipos incompativeis\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
       if(tipo1 == TL_CHAR || tipo2 == TL_CHAR)
         exit(ERR_CHAR_TO_X);
       if(tipo1 == TL_STRING || tipo2 == TL_STRING)
@@ -164,11 +178,58 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
       printf("Erro (Linha %d): Primeiro operando do operador ternario deve ser BOOL\n", arvore->valor_lexico.line_number);
       exit(ERR_WRONG_TYPE);
     }
-    if(arvore->filhos[1]->tipo != arvore->filhos[2]->tipo){
-      printf("Erro (Linha %d): Expressoes do operador ternario devem ter o mesmo tipo\n", arvore->valor_lexico.line_number);
-      exit(ERR_WRONG_TYPE);
+
+    int tipo1 = arvore->filhos[1]->tipo;
+    int tipo2 = arvore->filhos[2]->tipo;
+
+    char tipo1S[20], tipo2S[20];
+    switch (tipo1) {
+      case TL_FLOAT:
+        sprintf(tipo1S, "float");
+        break;
+      case TL_INT:
+        sprintf(tipo1S, "int");
+        break;
+      case TL_BOOL:
+        sprintf(tipo1S, "bool");
+        break;
     }
-    arvore->tipo = arvore->filhos[1]->tipo;
+    switch (tipo2) {
+      case TL_FLOAT:
+        sprintf(tipo2S, "float");
+        break;
+      case TL_INT:
+        sprintf(tipo2S, "int");
+        break;
+      case TL_BOOL:
+        sprintf(tipo2S, "bool");
+        break;
+    }
+
+    if(tipo1 != tipo2){
+      if(tipo1 == TL_FLOAT && (tipo2 == TL_BOOL || tipo2 == TL_INT)){
+        arvore->tipo = TL_FLOAT;
+        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo2S, tipo1S);
+      }
+      else if(tipo2 == TL_FLOAT && (tipo1 == TL_BOOL || tipo1 == TL_INT)){
+        arvore->tipo = TL_FLOAT;
+        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo1S, tipo2S);
+      }
+      else if(tipo1 == TL_INT && tipo2 == TL_BOOL){
+        arvore->tipo = TL_INT;
+        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo2S, tipo1S);
+      }
+      else if(tipo2 == TL_INT && tipo1 == TL_BOOL){
+        arvore->tipo = TL_INT;
+        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo1S, tipo2S);
+      }
+      else{
+        printf("Erro (Linha %d): Expressoes do operador ternario devem ter o mesmo tipo\n", arvore->valor_lexico.line_number);
+        exit(ERR_WRONG_TYPE);
+      }
+    }
+    else
+      arvore->tipo = arvore->filhos[1]->tipo;
     return;
   }
 
@@ -208,11 +269,11 @@ void infere_tipos(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   //Vetores
   if(!strcmp(arvore->valor_lexico.valTokStr, "[]")){
     consulta_tabela(tabela, arvore->filhos[0]->valor_lexico.valTokStr, &sInfo);
-    if(sInfo.tipo_identificador == TID_VAR){
+    if(sInfo.tipoIdentificador == TID_VAR){
       printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como variavel\n", arvore->valor_lexico.line_number, arvore->filhos[0]->valor_lexico.valTokStr);
       exit(ERR_VARIABLE);
     }
-    if(sInfo.tipo_identificador == TID_FUNC){
+    if(sInfo.tipoIdentificador == TID_FUNC){
       printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como funcao\n", arvore->valor_lexico.line_number, arvore->filhos[0]->valor_lexico.valTokStr);
       exit(ERR_FUNCTION);
     }

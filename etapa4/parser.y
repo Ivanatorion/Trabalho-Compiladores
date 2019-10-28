@@ -176,7 +176,7 @@ listaParams: parametro {$$ = $1; $$->prox = NULL;}
 parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); $$->linhaArg = $3.line_number; free($3.valTokStr);}
 |          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); $$->linhaArg = $2.line_number; free($2.valTokStr);} ;
 
-blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;
@@ -357,7 +357,7 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST*
   sInfo.linha = valorL.line_number;
   sInfo.tipo = tipo;
   sInfo.argList = args;
-  sInfo.tipo_identificador = tipo_id;
+  sInfo.tipoIdentificador = tipo_id;
 
   char *litToString = malloc(1000);
 
