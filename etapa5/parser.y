@@ -44,22 +44,19 @@ struct valLex DUMB_VALEX;
     };
   };
 
-  typedef struct iloc_op{
-    char *op1, *op2, *op3;
-    char *opCode;
-  } ILOC_OP;
+  typedef struct node_bool_op{
+    char *lt;
+    char *lf;
+  } BOOL_EXP_HEIR_ATT;
 
-  typedef struct list_iloc_op{
-    struct list_iloc_op *prox;
-
-    ILOC_OP* operation;
+  typedef struct il_inst{
+    char *inst;
   } ILOC_INST;
 
   typedef struct list_iloc_inst{
     struct list_iloc_inst *prox;
 
     ILOC_INST* instruction;
-    char *label;
   } ILOC_INST_LIST;
 
   typedef struct arvore_t{
@@ -72,7 +69,9 @@ struct valLex DUMB_VALEX;
     int tipo;
 
     ILOC_INST_LIST* instructionList;
-    char *IlocOpName;
+    char *IlocRegName;
+    BOOL_EXP_HEIR_ATT bexpHatt;
+
   } NODO_ARVORE;
 
   typedef struct tipo_composto{
@@ -340,7 +339,7 @@ void yyerror (char const *s) {
 }
 
 void genIlocCode(NODO_ARVORE* head){
-  genSaidaIloc(head);
+  genSaidaIloc(head, tabelaSimbolos);
 }
 
 void exporta(void *head) {

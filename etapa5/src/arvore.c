@@ -20,7 +20,7 @@ NODO_ARVORE* createNode(struct valLex valor, int nFilhosMax){
   nodo->valor_lexico = valor;
   nodo->tipo = TL_UNKNOWN;
   nodo->instructionList = NULL;
-  nodo->IlocOpName = NULL;
+  nodo->IlocRegName = NULL;
   return nodo;
 }
 
@@ -116,10 +116,10 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
   }
 
   int isBinExp = 0, isUnExp = 0;
-  const char binExps[14][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">", "<=", ">=", "==", "!="};
+  const char binExps[16][10] = {"+", "-", "*", "/", "%", "|", "&", "^", "<", ">", "<=", ">=", "==", "!=", "&&", "||"};
   const char unExps[7][10] = {"+", "-", "!", "&", "*", "?", "#"};
 
-  for(int i = 0; i < 14; i++)
+  for(int i = 0; i < 16; i++)
     if(!strcmp(arvore->valor_lexico.valTokStr, binExps[i]))
       isBinExp = 1;
 
@@ -335,10 +335,10 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
         else if(tipo1 == TL_BOOL && (tipo2 == TL_FLOAT || tipo2 == TL_INT))
           arvore->tipo = TL_BOOL;
         else{
-          printf("Erro (Linha %d): Atribuicao de tipos incompativeis\n", arvore->valor_lexico.line_number);
-          exit(ERR_WRONG_TYPE);
+          //printf("Erro (Linha %d): Atribuicao de tipos incompativeis\n", arvore->valor_lexico.line_number);
+          //exit(ERR_WRONG_TYPE);
         }
-        printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo2S, tipo1S);
+        //printf("Warning (Linha %d): Conversao implicita de %s para %s\n", arvore->valor_lexico.line_number, tipo2S, tipo1S);
     }
     else
       arvore->tipo = tipo1;

@@ -6,6 +6,35 @@
 
 #define DESLOC_PRINT 20
 
+typedef struct var_end{
+  int isGlobal;
+  int desloc;
+} VAR_END;
+
+VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
+  VAR_END result;
+
+  if(strcmp(nodo->valor_lexico.valTokStr, "[]")){
+    //Var simples
+    
+  }
+  else{
+
+  }
+
+  return result;
+}
+
+char* newCCName(){
+  static int nextCC = 1;
+
+  char ccName[100];
+  sprintf(ccName, "cc%d", nextCC);
+  nextCC++;
+
+  return strdup(ccName);
+}
+
 char* newRegName(){
   static int nextReg = 1;
 
@@ -16,196 +45,209 @@ char* newRegName(){
   return strdup(regName);
 }
 
+char* newLabelName(){
+  static int nextLabel = 1;
+
+  char labelName[100];
+  sprintf(labelName, "L%d", nextLabel);
+  nextLabel++;
+
+  return strdup(labelName);
+}
+
 void printInstructionList(ILOC_INST_LIST *instList){
-  if(instList == NULL)
-    return;
+  while(instList != NULL){
+    printf("%s\n", instList->instruction->inst);
+    instList = instList->prox;
+  }
+}
 
-  ILOC_INST *inst = instList->instruction;
+ILOC_INST_LIST* addInstructionToList(ILOC_INST_LIST *list, ILOC_INST *inst){
+  ILOC_INST_LIST *result = list;
 
-  if(instList->label != NULL){
-    printf("%s:", instList->label);
-    for(int i = strlen(instList->label) + 1; i < DESLOC_PRINT; i++)
-      printf(" ");
+  if(result == NULL){
+    result = malloc(sizeof(ILOC_INST_LIST));
+    result->prox = NULL;
+    result->instruction = inst;
   }
   else{
-    for(int i = 0; i < DESLOC_PRINT; i++)
-      printf(" ");
-  }
-  printf("[ ");
+    while(list->prox != NULL)
+      list = list->prox;
 
-  while(inst != NULL){
-    ILOC_OP *op = inst->operation;
-    printf("%s %s, %s, %s ; ", op->opCode, op->op1, op->op2, op->op3);
-    inst = inst->prox;
+    list->prox = malloc(sizeof(ILOC_INST_LIST));
+    list = list->prox;
+    list->prox = NULL;
+    list->instruction = inst;
   }
-  printf("]\n");
 
-  printInstructionList(instList->prox);
+  return result;
 }
 
-void genBinOpCode(NODO_ARVORE* nodo, char *opName){
-  ILOC_INST_LIST *listInst = NULL;
-  ILOC_INST *iInst = NULL;
+ILOC_INST_LIST* concatInstructionLists(ILOC_INST_LIST *l1, ILOC_INST_LIST *l2){
+  if(l1 == NULL)
+    return l2;
+  if(l2 == NULL)
+    return l1;
 
-  char litOnString[100];
-  char *r1, *r2, *r3;
+  ILOC_INST_LIST *result = l1;
 
-  if(nodo->filhos[0]->valor_lexico.tipo_literal == TL_INT){
-    if(nodo->filhos[1]->valor_lexico.tipo_literal == TL_INT){
-      listInst = malloc(sizeof(ILOC_INST_LIST));
-      iInst = malloc(sizeof(ILOC_INST));
-      listInst->instruction = iInst;
+  while(l1->prox != NULL)
+    l1 = l1->prox;
 
-      ILOC_OP *opLI = malloc(sizeof(ILOC_OP));
+  l1->prox = l2;
 
-      sprintf(litOnString, "%d", nodo->filhos[1]->valor_lexico.valTokInt);
-
-      opLI->opCode = strdup("loadI");
-      opLI->op1 = strdup(litOnString);
-      opLI->op2 = NULL;
-      opLI->op3 = newRegName();
-      r2 = opLI->op3;
-
-      iInst->operation = opLI;
-      iInst->prox = NULL;
-    }
-    else{
-      r2 = strdup(nodo->filhos[1]->IlocOpName);
-    }
-
-    ILOC_OP *opLI2 = malloc(sizeof(ILOC_OP));
-    if(iInst != NULL){
-      iInst->prox = malloc(sizeof(ILOC_INST));
-      iInst = iInst->prox;
-    }
-    else{
-      listInst = malloc(sizeof(ILOC_INST_LIST));
-      iInst = malloc(sizeof(ILOC_INST));
-      listInst->instruction = iInst;
-    }
-
-    sprintf(litOnString, "%sI", opName);
-    opLI2->opCode = strdup(litOnString);
-    opLI2->op1 = r2;
-
-    sprintf(litOnString, "%d", nodo->filhos[0]->valor_lexico.valTokInt);
-
-    opLI2->op2 = strdup(litOnString);
-    opLI2->op3 = newRegName();
-
-    iInst->operation = opLI2;
-    iInst->prox = NULL;
-
-    listInst->prox = NULL;
-  }
-  else{
-    if(nodo->filhos[1]->valor_lexico.tipo_literal == TL_INT){
-      r1 = strdup(nodo->filhos[0]->IlocOpName);
-      ILOC_OP *opLI = malloc(sizeof(ILOC_OP));
-      listInst = malloc(sizeof(ILOC_INST_LIST));
-      iInst = malloc(sizeof(ILOC_INST));
-      listInst->instruction = iInst;
-
-      sprintf(litOnString, "%sI", opName);
-      opLI->opCode = strdup(litOnString);
-      opLI->op1 = r1;
-
-      sprintf(litOnString, "%d", nodo->filhos[1]->valor_lexico.valTokInt);
-
-      opLI->op2 = strdup(litOnString);
-      opLI->op3 = newRegName();
-
-      iInst->operation = opLI;
-      iInst->prox = NULL;
-
-      listInst->prox = NULL;
-    }
-    else{
-      ILOC_OP *opLI = malloc(sizeof(ILOC_OP));
-      listInst = malloc(sizeof(ILOC_INST_LIST));
-      iInst = malloc(sizeof(ILOC_INST));
-      listInst->instruction = iInst;
-
-      sprintf(litOnString, "%s", opName);
-      opLI->opCode = strdup(litOnString);
-      opLI->op1 = strdup(nodo->filhos[0]->IlocOpName);
-      opLI->op2 = strdup(nodo->filhos[1]->IlocOpName);
-      opLI->op3 = newRegName();
-    }
-  }
-  listInst->prox = NULL;
-  listInst->label = NULL;
-  printInstructionList(listInst);
-
-  printf("\n\n\n\n");
-}
-
-void genIdOpCode(NODO_ARVORE* nodo, T_SIMBOLO *tabela){
-  ILOC_INST_LIST *list = malloc(sizeof(ILOC_INST_LIST));
-  ILOC_INST *inst = malloc(sizeof(ILOC_INST));
-  ILOC_OP *op = malloc(sizeof(ILOC_OP));
-
-  char litOnString[100];
-
-  list->prox = NULL;
-  list->instruction = inst;
-
-  //Certamente esta na tabela
-  S_INFO sInfo;
-  consulta_tabela(tabela, nodo->valor_lexico.valTokStr, &sInfo);
-
-  op->opCode = strdup("loadAI");
-  op->op1 = (sInfo.isVarGlob) ? strdup("rbss") : strdup("rfp");
-  sprintf(litOnString, "%d", sInfo.varDesloc);
-  op->op2 = strdup(litOnString);
-  op->op3 = newRegName();
-
-  inst->operation = op;
-  inst->prox = NULL;
-
-  nodo->instructionList = list;
-}
-
-void genLitOpCode(NODO_ARVORE* nodo){
-  ILOC_INST_LIST *list = malloc(sizeof(ILOC_INST_LIST));
-  ILOC_INST *inst = malloc(sizeof(ILOC_INST));
-  ILOC_OP *op = malloc(sizeof(ILOC_OP));
-
-  nodo->IlocOpName = newRegName();
-
-  list->instruction = inst;
-
-  inst->operation = op;
-
-  
+  return result;
 }
 
 void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
-  if(nodo == NULL || nodo->IlocOpName != NULL)
+  char buffer[128];
+
+  if(nodo == NULL || nodo->instructionList != NULL)
     return;
 
-  for(int i = 0; i < nodo->nFilhosMax; i++){
-    printf("Gen\n");
-    genNodeCode(nodo->filhos[i], tabela);
-  }
+  if(nodo->tipo == TL_BOOL){
+    if(nodo->nFilhosMax == 3){
+      if(!strcmp(nodo->valor_lexico.valTokStr, "=")){
+          if(nodo->filhos[1]->tipo == TL_BOOL){
+              char *ltrue = newLabelName();
+              char *lfalse = newLabelName();
+              char *lend = newLabelName();
+              nodo->filhos[1]->bexpHatt.lt = ltrue;
+              nodo->filhos[1]->bexpHatt.lf = lfalse;
+              genNodeCode(nodo->filhos[1], tabela);
+              nodo->instructionList = nodo->filhos[1]->instructionList;
+              char *reg = newRegName();
 
-  if(nodo->valor_lexico.tipo_literal == TL_NONE){
-    if(nodo->valor_lexico.tipo_token == TT_ID){
-      genIdOpCode(nodo, tabela);
+              ILOC_INST_LIST *extras = NULL;
+              ILOC_INST *instruction;
+
+              instruction = malloc(sizeof(ILOC_INST));
+              sprintf(buffer, "%s: loadI true => %s", ltrue, reg);
+              instruction->inst = strdup(buffer);
+              extras = addInstructionToList(extras, instruction);
+
+              instruction = malloc(sizeof(ILOC_INST));
+              sprintf(buffer, "jumpI -> %s", lend);
+              instruction->inst = strdup(buffer);
+              extras = addInstructionToList(extras, instruction);
+
+              instruction = malloc(sizeof(ILOC_INST));
+              sprintf(buffer, "%s: loadI false => %s", lfalse, reg);
+              instruction->inst = strdup(buffer);
+              extras = addInstructionToList(extras, instruction);
+
+              instruction = malloc(sizeof(ILOC_INST));
+              sprintf(buffer, "jumpI -> %s", lend);
+              instruction->inst = strdup(buffer);
+              extras = addInstructionToList(extras, instruction);
+
+              VAR_END vend = getVarEnd(nodo->filhos[0], tabela);
+
+              instruction = malloc(sizeof(ILOC_INST));
+              sprintf(buffer, "%s: storeAI %s => %s, %d", lend, reg, (vend.isGlobal) ? "rbss" : "rfp", vend.desloc);
+              instruction->inst = strdup(buffer);
+              extras = addInstructionToList(extras, instruction);
+
+              nodo->instructionList = concatInstructionLists(nodo->instructionList, extras);
+
+              free(ltrue);
+              free(lfalse);
+              free(lend);
+              free(reg);
+          }
+      }
+      else if(!strcmp(nodo->valor_lexico.valTokStr, "&&")){
+        nodo->filhos[0]->bexpHatt.lf = strdup(nodo->bexpHatt.lf);
+        nodo->filhos[0]->bexpHatt.lt = newLabelName();
+        genNodeCode(nodo->filhos[0], tabela);
+        nodo->filhos[1]->bexpHatt.lf = strdup(nodo->bexpHatt.lf);
+        nodo->filhos[1]->bexpHatt.lt = strdup(nodo->bexpHatt.lt);
+        genNodeCode(nodo->filhos[1], tabela);
+        sprintf(buffer, "%s: nop", nodo->filhos[0]->bexpHatt.lt);
+
+        ILOC_INST *instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+
+        nodo->instructionList = addInstructionToList(nodo->filhos[0]->instructionList, instruction);
+        nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[1]->instructionList);
+      }
+      else if(!strcmp(nodo->valor_lexico.valTokStr, "||")){
+        nodo->filhos[0]->bexpHatt.lf = newLabelName();
+        nodo->filhos[0]->bexpHatt.lt = strdup(nodo->bexpHatt.lt);
+        genNodeCode(nodo->filhos[0], tabela);
+        nodo->filhos[1]->bexpHatt.lf = strdup(nodo->bexpHatt.lf);
+        nodo->filhos[1]->bexpHatt.lt = strdup(nodo->bexpHatt.lt);
+        genNodeCode(nodo->filhos[1], tabela);
+        sprintf(buffer, "%s: nop", nodo->filhos[0]->bexpHatt.lf);
+
+        ILOC_INST *instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+
+        nodo->instructionList = addInstructionToList(nodo->filhos[0]->instructionList, instruction);
+        nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[1]->instructionList);
+      }
+      else if(!strcmp(nodo->valor_lexico.valTokStr, "<")){
+        ILOC_INST *instruction;
+        genNodeCode(nodo->filhos[0], tabela);
+        genNodeCode(nodo->filhos[1], tabela);
+        nodo->instructionList = concatInstructionLists(nodo->filhos[0]->instructionList, nodo->filhos[1]->instructionList);
+
+        char *ccN = newCCName();
+
+        instruction = malloc(sizeof(ILOC_INST));
+        sprintf(buffer, "comp %s, %s => %s", nodo->filhos[0]->IlocRegName, nodo->filhos[1]->IlocRegName, ccN);
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        instruction = malloc(sizeof(ILOC_INST));
+        sprintf(buffer, "cbr_LT %s -> %s, %s", ccN, nodo->bexpHatt.lt, nodo->bexpHatt.lf);
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        free(ccN);
+      }
+
     }
+    else if(nodo->nFilhosMax == 2){ //UnOp
+      if(!strcmp(nodo->valor_lexico.valTokStr, "!")){
+        nodo->filhos[0]->bexpHatt.lf = strdup(nodo->bexpHatt.lt);
+        nodo->filhos[0]->bexpHatt.lt = strdup(nodo->bexpHatt.lf);
+        genNodeCode(nodo->filhos[0], tabela);
+        nodo->instructionList = nodo->filhos[0]->instructionList;
+      }
+    }
+    else{
+      if(nodo->valor_lexico.tipo_literal == TL_BOOL){ //Literal
+        ILOC_INST *instruction = malloc(sizeof(ILOC_INST));
+        if(nodo->valor_lexico.valTokBool == 0)
+          sprintf(buffer, "jumpI %s", nodo->bexpHatt.lf);
+        else
+          sprintf(buffer, "jumpI %s", nodo->bexpHatt.lt);
 
-    if(!strcmp(nodo->valor_lexico.valTokStr, "+") && nodo->nFilhosMax == 3){
-      genBinOpCode(nodo, "add");
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = malloc(sizeof(ILOC_INST_LIST));
+        nodo->instructionList->prox = NULL;
+        nodo->instructionList->instruction = instruction;
+      }
+      else{ //Identificador
+
+      }
     }
   }
   else{
-    genLitOpCode(nodo);
+    for(int i = 0; i < nodo->nFilhosMax; i++){
+      genNodeCode(nodo->filhos[i], tabela);
+      if(nodo->filhos[i] != NULL)
+        nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[i]->instructionList);
+    }
   }
 
 }
 
 void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   genNodeCode(arvore, tabela);
+
+  printInstructionList(arvore->instructionList);
 
   FILE *fp = fopen("saida.iloc", "w");
   //Write...
