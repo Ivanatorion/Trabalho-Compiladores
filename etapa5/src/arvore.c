@@ -442,9 +442,29 @@ void printArvore(NODO_ARVORE* arvore, int spaces){
   }
 }
 
+int firstfree = 1;
+
+void free_instruction_list(NODO_ARVORE* arvore){
+  ILOC_INST_LIST *aux = arvore->instructionList;
+  while (aux != NULL) {
+    aux = aux->prox;
+    free(arvore->instructionList->instruction->inst);
+    free(arvore->instructionList->instruction);
+    free(arvore->instructionList);
+    arvore->instructionList = aux;
+  }
+}
+
 void libera_arvore(NODO_ARVORE* arvore){
   if(arvore == NULL)
     return;
+
+  if(firstfree){
+    firstfree = 0;
+    free_instruction_list(arvore);
+  }
+  if(arvore->IlocRegName != NULL)
+    free(arvore->IlocRegName);
 
   for(int i = 0; i < arvore->nFilhosMax; i++){
     libera_arvore(arvore->filhos[i]);

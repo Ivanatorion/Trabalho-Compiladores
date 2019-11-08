@@ -165,29 +165,29 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
   }
 
   //Atualiza o tamanho e deslocamento da Variavel
+  info.varDesloc = tabela->accDesloc;
   switch(info.tipo.tipoPrim){
     case TL_CHAR:
       info.tamanho = 1;
-      info.varDesloc = tabela->accDesloc + 1;
+      tabela->accDesloc = tabela->accDesloc + 1;
       break;
     case TL_STRING:
       info.tamanho = 0; //??
-      info.varDesloc = tabela->accDesloc + 0;
+      tabela->accDesloc = tabela->accDesloc + 0;
       break;
     case TL_INT:
       info.tamanho = 4;
-      info.varDesloc = tabela->accDesloc + 4;
+      tabela->accDesloc = tabela->accDesloc + 4;
       break;
     case TL_FLOAT:
       info.tamanho = 8;
-      info.varDesloc = tabela->accDesloc + 8;
+      tabela->accDesloc = tabela->accDesloc + 8;
       break;
     case TL_BOOL:
       info.tamanho = 1;
-      info.varDesloc = tabela->accDesloc + 1;
+      tabela->accDesloc = tabela->accDesloc + 1;
       break;
   }
-  tabela->accDesloc = info.varDesloc;
 
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;
