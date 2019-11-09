@@ -6,6 +6,12 @@
 
 #define INIT_MAX_ENTRADAS 11
 
+typedef struct dim_list{
+  struct dim_list *prox;
+
+  int dim;
+} DIM_LIST;
+
 typedef struct simbolo_info{
   int linha;
   int natureza;
@@ -13,6 +19,9 @@ typedef struct simbolo_info{
   int tamanho;
 
   int tipoIdentificador; //Variavel, vetor, funcao
+
+  DIM_LIST* dimList; //Lista de dimensoes para arranjos
+  int nDims;
 
   ARG_LIST* argList;
   int nArgs;
@@ -54,7 +63,7 @@ void free_tabela_recursive(T_SIMBOLO* tabela);
 int getTipoUltimaFuncao(T_SIMBOLO* tabela);
 
 //Retorna codigos de erro
-int insere_tabela(T_SIMBOLO* tabela, S_INFO info);
+int insere_tabela(T_SIMBOLO* tabela, S_INFO info, NODO_ARVORE* dimensions);
 
 //Retorna codigos de erro, armazena em "info" o valor armazenado na tabela
 int consulta_tabela(T_SIMBOLO* tabela, char* chave, S_INFO* info);

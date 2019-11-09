@@ -62,7 +62,7 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
     sInfo.idName = iniciais->arg;
     sInfo.tipo = iniciais->tipoArg;
     sInfo.linha = iniciais->linhaArg;
-    insere_tabela(tabela, sInfo);
+    insere_tabela(tabela, sInfo, NULL);
     iniciais = iniciais->prox;
   }
 }
@@ -84,7 +84,7 @@ int getTipoUltimaFuncao(T_SIMBOLO* tabela){
   return tabela->tipoFuncaoTabela.tipoPrim;
 }
 
-int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
+int insere_tabela(T_SIMBOLO* tabela, S_INFO info, NODO_ARVORE* dimensions){
   //Se for identificador, insere no escopo mais profundo
   if(info.natureza == NATUREZA_IDENTIFICADOR){
     while(tabela->prox != NULL)
@@ -94,6 +94,36 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info){
   else{
     while(tabela->ant != NULL)
       tabela = tabela->ant;
+  }
+
+  //Dimensoes de arranjos
+  info.nDims = 0;
+  info.dimList = NULL;
+  NODO_ARVORE* auxNAP = dimensions;
+  NODO_ARVORE* auxNAP2;
+  DIM_LIST* auxDL;
+  if(dimensions != NULL){
+    info.nDims++;
+    info.dimList = malloc(sizeof(DIM_LIST));
+    info.dimList->dim = dimensions->filhos[1]->valor_lexico.valTokInt;
+    dimensions = dimensions->filhos[0];
+    info.dimList->prox = NULL;
+    auxDL = info.dimList;
+  }
+  while(dimensions != NULL){
+    info.nDims++;
+    auxDL->prox = malloc(sizeof(DIM_LIST));
+    auxDL = auxDL->prox;
+    auxDL->prox = NULL;
+    auxDL->dim = dimensions->filhos[1]->valor_lexico.valTokInt;
+    dimensions = dimensions->filhos[0];
+  }
+  while(auxNAP != NULL){
+    free(auxNAP->filhos[1]);
+    auxNAP2 = auxNAP->filhos[0];
+    free(auxNAP->filhos);
+    free(auxNAP);
+    auxNAP = auxNAP2;
   }
 
   if(tabela->nEntradas == tabela->maxEntradas){
@@ -299,6 +329,16 @@ void free_tabela_recursive(T_SIMBOLO* tabela){
         free(tabela->entradas[i]->argList);
       }
 
+      if(tabela->entradas[i]->dimList != NULL){
+        DIM_LIST* auxPointer = tabela->entradas[i]->dimList->prox;
+        while(auxPointer != NULL){
+          free(tabela->entradas[i]->dimList);
+          tabela->entradas[i]->dimList = auxPointer;
+          auxPointer = auxPointer->prox;
+        }
+        free(tabela->entradas[i]->dimList);
+      }
+
       free(tabela->entradas[i]);
     }
   }
@@ -364,7 +404,13 @@ void print_tabela(T_SIMBOLO* tabela){
 
               break;
             case TID_VET:
-              printf("Vetor | ");
+              printf("Vetor %d Dims | ", tabela->entradas[i]->nDims);
+              DIM_LIST* cursorD = tabela->entradas[i]->dimList;
+              while(cursorD != NULL){
+                printf("[%d] ", cursorD->dim);
+                cursorD = cursorD->prox;
+              }
+              printf("| ");
               break;
           }
           break;

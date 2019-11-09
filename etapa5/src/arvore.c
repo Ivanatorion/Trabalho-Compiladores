@@ -70,9 +70,23 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
     }
 
     //Vetores
-    if(sInfo.tipoIdentificador == TID_VET && (arvorePai == NULL || strcmp(arvorePai->valor_lexico.valTokStr, "[]") != 0)){
-      printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como vetor\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
-      exit(ERR_VECTOR);
+    if(sInfo.tipoIdentificador == TID_VET){
+      if(arvorePai == NULL || strcmp(arvorePai->valor_lexico.valTokStr, "[]")){
+        printf("Erro (Linha %d): Identificador \"%s\" deve ser usado como vetor\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr);
+        exit(ERR_VECTOR);
+      }
+
+      NODO_ARVORE *aux = arvorePai->filhos[1];
+      int informedDims = 0;
+      while(aux != NULL){
+        informedDims++;
+        aux = aux->filhos[0];
+      }
+
+      if(informedDims != sInfo.nDims){
+        printf("Erro (Linha %d): Arranjo \"%s\" possui %d dimensoes, mas foi acessado com %d indices\n", arvore->valor_lexico.line_number, arvore->valor_lexico.valTokStr, sInfo.nDims, informedDims);
+        exit(ERR_VECTOR);
+      }
     }
 
     //Funcao
@@ -289,9 +303,15 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
       exit(ERR_FUNCTION);
     }
 
-    if(ADDITIONAL_SEMANTIC_TESTS && arvore->filhos[1]->tipo != TL_INT){
-      printf("Erro (Linha %d): O tipo do indice de um vetor deve ser int\n", arvore->valor_lexico.line_number);
-      exit(ERR_WRONG_TYPE);
+    if(ADDITIONAL_SEMANTIC_TESTS){
+      NODO_ARVORE *aux = arvore->filhos[1];
+      while(aux != NULL){
+        if(aux->tipo != TL_INT){
+          printf("Erro (Linha %d): O tipo do indice de um vetor deve ser int\n", arvore->valor_lexico.line_number);
+          exit(ERR_WRONG_TYPE);
+        }
+        aux = aux->filhos[0];
+      }
     }
 
     arvore->tipo = arvore->filhos[0]->tipo;

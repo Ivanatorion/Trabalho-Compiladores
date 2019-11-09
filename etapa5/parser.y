@@ -15,7 +15,7 @@ void exporta(void *head);
 void libera(void *head);
 
 //Tabela de simbolos
-void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args);
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args, NODO_ARVORE* dimensions);
 
 //Codigo ILOC
 void genIlocCode(NODO_ARVORE* head);
@@ -146,7 +146,7 @@ struct valLex DUMB_VALEX;
 %token TOKEN_ERRO
 %start programa
 
-%type<nodo_arvore> programa declFunc declVarLocal literal operando expr comandoFuncExpr listaArgs argumento blocoComando blocoComandoFun comando
+%type<nodo_arvore> programa declFunc declVarLocal listaDim listaDimExpr literal operando expr comandoFuncExpr listaArgs argumento blocoComando blocoComandoFun comando
 comandoAtrib comandoBreak comandoShift comandoReturn comandoContinue comandoChamadaFunc comandoControleFluxo listaComandos listaForComandos forComando
 
 %type<valor_lexico> TK_IDENTIFICADOR TK_LIT_INT TK_LIT_CHAR TK_LIT_FLOAT
@@ -181,8 +181,11 @@ programa: declVarGlobal programa {$$ = $2; arvore = $$;};
 programa: declFunc programa {$$ = $1; addFilho($$, $2); arvore = $$;};
 programa: {$$ = NULL; arvore = $$;};
 
-declVarGlobal: staticType TK_IDENTIFICADOR ';' { addSimbolo($2, $1, TID_VAR, NULL); free($2.valTokStr);}
-|        staticType TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';' { addSimbolo($2, $1, TID_VET, NULL); free($2.valTokStr);};
+declVarGlobal: staticType TK_IDENTIFICADOR ';' { addSimbolo($2, $1, TID_VAR, NULL, NULL); free($2.valTokStr);}
+|        staticType TK_IDENTIFICADOR listaDim ';' { addSimbolo($2, $1, TID_VET, NULL, $3); free($2.valTokStr);};
+
+listaDim: '[' TK_LIT_INT ']' {$$ = createNode(DUMB_VALEX, 2); $$->valor_lexico.valTokStr = "[]"; addFilho($$, NULL); addFilho($$, createNode($2, 0));}
+|         listaDim '[' TK_LIT_INT ']' {$$ = createNode(DUMB_VALEX, 2); $$->valor_lexico.valTokStr = "[]"; addFilho($$, $1); addFilho($$, createNode($3, 0));}
 
 staticType: TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
 |            primType {$$ = $1;};
@@ -193,7 +196,7 @@ primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
 | TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
 | TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4);} blocoComandoFun {$$ = createNode($2, 2); addFilho($$, $8);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4, NULL);} blocoComandoFun {$$ = createNode($2, 2); addFilho($$, $8);};
 
 listaParams: parametro {$$ = $1; $$->prox = NULL;}
 |            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
@@ -219,29 +222,29 @@ comando: blocoComando ';' {$$ = $1;}
 |        comandoContinue ';' {$$ = $1;}
 |        comandoControleFluxo ';' {$$ = $1;};
 
-declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = NULL; free($2.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
+declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = NULL; free($2.valTokStr);}
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
 
 tipoVarLocal: primType {$$ = $1;}
 |             TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
 |             TK_PR_CONST primType {$$ = $2; $$.isConst = 1;}
 |             TK_PR_STATIC TK_PR_CONST primType {$$ = $3; $$.isStatic = 1; $$.isConst = 1;};
 
-literal: TK_LIT_INT { $$ = createNode($1, 1); $$->tipo = TL_INT; addSimbolo($1, (TIPO_COMPOSTO) {TL_INT, 0, 0}, -1, NULL);}
-|        TK_LIT_CHAR { $$ = createNode($1, 1); $$->tipo = TL_CHAR; addSimbolo($1, (TIPO_COMPOSTO) {TL_CHAR, 0, 0}, -1, NULL);}
-|        TK_LIT_TRUE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL);}
-|        TK_LIT_FALSE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL);}
-|        TK_LIT_FLOAT { $$ = createNode($1, 1); $$->tipo = TL_FLOAT; addSimbolo($1, (TIPO_COMPOSTO) {TL_FLOAT, 0, 0}, -1, NULL);}
-|        TK_LIT_STRING { $$ = createNode($1, 1); $$->tipo = TL_STRING; addSimbolo($1, (TIPO_COMPOSTO) {TL_STRING, 0, 0}, -1, NULL);};
+literal: TK_LIT_INT { $$ = createNode($1, 1); $$->tipo = TL_INT; addSimbolo($1, (TIPO_COMPOSTO) {TL_INT, 0, 0}, -1, NULL, NULL);}
+|        TK_LIT_CHAR { $$ = createNode($1, 1); $$->tipo = TL_CHAR; addSimbolo($1, (TIPO_COMPOSTO) {TL_CHAR, 0, 0}, -1, NULL, NULL);}
+|        TK_LIT_TRUE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL, NULL);}
+|        TK_LIT_FALSE { $$ = createNode($1, 1); $$->tipo = TL_BOOL; addSimbolo($1, (TIPO_COMPOSTO) {TL_BOOL, 0, 0}, -1, NULL, NULL);}
+|        TK_LIT_FLOAT { $$ = createNode($1, 1); $$->tipo = TL_FLOAT; addSimbolo($1, (TIPO_COMPOSTO) {TL_FLOAT, 0, 0}, -1, NULL, NULL);}
+|        TK_LIT_STRING { $$ = createNode($1, 1); $$->tipo = TL_STRING; addSimbolo($1, (TIPO_COMPOSTO) {TL_STRING, 0, 0}, -1, NULL, NULL);};
 
 comandoAtrib: TK_IDENTIFICADOR '=' expr {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($1, 0)); addFilho($$, $3);}
-|             TK_IDENTIFICADOR '[' expr ']' '=' expr {$$ = createNode($5, 3); $$->valor_lexico.valTokStr = strdup("=");
-                                                          addFilho($$, createNode($2, 2));
+|             TK_IDENTIFICADOR listaDimExpr '=' expr {$$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("=");
+                                                          addFilho($$, createNode($3, 2));
                                                           $$->filhos[0]->valor_lexico.valTokStr = strdup("[]");
                                                           addFilho($$->filhos[0], createNode($1, 0));
-                                                          addFilho($$->filhos[0], $3);
-                                                          addFilho($$, $6);};
+                                                          addFilho($$->filhos[0], $2);
+                                                          addFilho($$, $4);};
 
 comandoEntradaSaida: TK_PR_INPUT expr ';' {libera_arvore($2);}
 |                    TK_PR_OUTPUT expr ';' {libera_arvore($2);};
@@ -322,12 +325,15 @@ expr: operando {$$ = $1;}
 |     expr '?' expr ':' expr {$$ = createNode($4, 3); $$->valor_lexico.valTokStr = strdup("?:"); addFilho($$, $1); addFilho($$, $3); addFilho($$, $5);} ;
 
 operando: TK_IDENTIFICADOR {$$ = createNode($1, 1);}
-|         TK_IDENTIFICADOR '[' expr ']' {$$ = createNode($2, 3); $$->valor_lexico.valTokStr = strdup("[]");
+|         TK_IDENTIFICADOR listaDimExpr {$$ = createNode(DUMB_VALEX, 3); $$->valor_lexico.valTokStr = strdup("[]");
                                          addFilho($$, createNode($1, 0));
-                                         addFilho($$, $3);}
+                                         addFilho($$, $2);}
 
 |         literal {$$ = $1;}
 |         comandoFuncExpr {$$ = $1;};
+
+listaDimExpr: '[' expr ']' {$$ = $2;}
+|             listaDimExpr '[' expr ']' {$$ = $1; addFilho($$, $3);};
 
 comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')' {$$ = createNode($1, 2); addFilho($$, $3);};
 
@@ -380,7 +386,7 @@ void libera(void *head) {
   tabelaSimbolos = NULL;
 }
 
-void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args){
+void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST* args, NODO_ARVORE* dimensions){
   if(tabelaSimbolos == NULL)
     tabelaSimbolos = make_tabela();
 
@@ -431,7 +437,7 @@ void addSimbolo(struct valLex valorL, TIPO_COMPOSTO tipo, int tipo_id, ARG_LIST*
     sInfo.idName = litToString;
   }
 
-  insere_tabela(tabelaSimbolos, sInfo);
+  insere_tabela(tabelaSimbolos, sInfo, dimensions);
 
   free(litToString);
 }
