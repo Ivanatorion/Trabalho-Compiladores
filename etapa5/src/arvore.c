@@ -80,7 +80,7 @@ void infere_tipos(NODO_ARVORE* arvore, NODO_ARVORE* arvorePai, T_SIMBOLO* tabela
       int informedDims = 0;
       while(aux != NULL){
         informedDims++;
-        aux = aux->filhos[0];
+        aux = aux->filhos[aux->nFilhosMax-1];
       }
 
       if(informedDims != sInfo.nDims){

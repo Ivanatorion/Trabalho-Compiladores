@@ -51,6 +51,10 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
 
   tabela->prox->tipoFuncaoTabela = tipoFuncaoT;
 
+  if(tipoFuncaoT.tipoPrim == TL_NONE){
+    tabela->prox->accDesloc = tabela->accDesloc;
+  }
+
   //Insere as entradas iniciais
   tabela = tabela->prox;
   S_INFO sInfo;
@@ -70,6 +74,10 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
 void popEscopo(T_SIMBOLO* tabela){
   while(tabela->prox != NULL)
     tabela = tabela->prox;
+
+  if(tabela->tipoFuncaoTabela.tipoPrim == TL_NONE){
+    tabela->ant->accDesloc = tabela->accDesloc;
+  }
 
   free_tabela(tabela);
 }
@@ -101,22 +109,14 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info, NODO_ARVORE* dimensions){
   info.dimList = NULL;
   NODO_ARVORE* auxNAP = dimensions;
   NODO_ARVORE* auxNAP2;
-  DIM_LIST* auxDL;
-  if(dimensions != NULL){
-    info.nDims++;
-    info.dimList = malloc(sizeof(DIM_LIST));
-    info.dimList->dim = dimensions->filhos[1]->valor_lexico.valTokInt;
-    dimensions = dimensions->filhos[0];
-    info.dimList->prox = NULL;
-    auxDL = info.dimList;
-  }
+  DIM_LIST* auxDL = NULL;
   while(dimensions != NULL){
     info.nDims++;
-    auxDL->prox = malloc(sizeof(DIM_LIST));
-    auxDL = auxDL->prox;
-    auxDL->prox = NULL;
-    auxDL->dim = dimensions->filhos[1]->valor_lexico.valTokInt;
+    info.dimList = malloc(sizeof(DIM_LIST));
+    info.dimList->prox = auxDL;
+    info.dimList->dim = dimensions->filhos[1]->valor_lexico.valTokInt;
     dimensions = dimensions->filhos[0];
+    auxDL = info.dimList;
   }
   while(auxNAP != NULL){
     free(auxNAP->filhos[1]);
@@ -199,25 +199,27 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info, NODO_ARVORE* dimensions){
   switch(info.tipo.tipoPrim){
     case TL_CHAR:
       info.tamanho = 1;
-      tabela->accDesloc = tabela->accDesloc + 1;
       break;
     case TL_STRING:
       info.tamanho = 0; //??
-      tabela->accDesloc = tabela->accDesloc + 0;
       break;
     case TL_INT:
       info.tamanho = 4;
-      tabela->accDesloc = tabela->accDesloc + 4;
       break;
     case TL_FLOAT:
       info.tamanho = 8;
-      tabela->accDesloc = tabela->accDesloc + 8;
       break;
     case TL_BOOL:
-      info.tamanho = 1;
-      tabela->accDesloc = tabela->accDesloc + 1;
+      info.tamanho = 4;
       break;
   }
+
+  auxDL = info.dimList;
+  while(auxDL != NULL){
+    info.tamanho = info.tamanho * auxDL->dim;
+    auxDL = auxDL->prox;
+  }
+  tabela->accDesloc = tabela->accDesloc + info.tamanho;
 
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;
@@ -452,6 +454,5 @@ void print_tabela(T_SIMBOLO* tabela){
 
       printf(")\n");
     }
-
     printf("\n");
 }

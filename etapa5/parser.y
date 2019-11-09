@@ -206,7 +206,7 @@ parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST));
 |          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); $$->linhaArg = $2.line_number; free($2.valTokStr);} ;
 
 blocoComandoFun: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); genNodeCode($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
-blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = createNode(DUMB_VALEX, 1); addFilho($$, $3); $$->valor_lexico.valTokStr = strdup("{}"); print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = createNode(DUMB_VALEX, 1); addFilho($$, $3); $$->valor_lexico.valTokStr = strdup("{}"); print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); genNodeCode($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
 | {$$ = NULL;} ;
@@ -224,7 +224,7 @@ comando: blocoComando ';' {$$ = $1;}
 
 declVarLocal: tipoVarLocal TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = NULL; free($2.valTokStr);}
 |             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE literal ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, $4); free($3.valTokStr);}
-|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 0)); free($3.valTokStr);};
+|             tipoVarLocal TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR ';' {addSimbolo($2, $1, TID_VAR, NULL, NULL); $$ = createNode($3, 3); $$->valor_lexico.valTokStr = strdup("="); addFilho($$, createNode($2, 0)); addFilho($$, createNode($4, 1)); free($3.valTokStr);};
 
 tipoVarLocal: primType {$$ = $1;}
 |             TK_PR_STATIC primType {$$ = $2; $$.isStatic = 1;}
