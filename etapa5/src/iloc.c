@@ -158,6 +158,14 @@ VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
     instruction->inst = strdup(buffer);
     result.regDeslocCalc = addInstructionToList(result.regDeslocCalc, instruction);
     free(auxR);
+
+    auxR = result.regDesloc;
+    result.regDesloc = newRegName();
+    instruction = malloc(sizeof(ILOC_INST));
+    sprintf(buffer, "addI %s, %d => %s", auxR, sInfo.varDesloc, result.regDesloc);
+    instruction->inst = strdup(buffer);
+    result.regDeslocCalc = addInstructionToList(result.regDeslocCalc, instruction);
+    free(auxR);
   }
 
   result.isGlobal = sInfo.isVarGlob;
@@ -425,6 +433,34 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
         nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[1]->instructionList);
         free(nodo->filhos[0]->bexpHatt.lf);
       }
+      else if(!strcmp(nodo->valor_lexico.valTokStr, "[]")){
+        VAR_END vend = getVarEnd(nodo, tabela);
+        nodo->IlocRegName = newRegName();
+        ILOC_INST *instruction;
+
+        nodo->instructionList = vend.regDeslocCalc;
+
+        char *auxR = newRegName();
+
+        sprintf(buffer, "add %s, %s => %s", (vend.isGlobal) ? "rbss" : "rfp", vend.regDesloc, auxR);
+        instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        sprintf(buffer, "load %s => %s", auxR, nodo->IlocRegName);
+        instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        free(auxR);
+
+        sprintf(buffer, "cbr %s -> %s, %s", nodo->IlocRegName, nodo->bexpHatt.lt, nodo->bexpHatt.lf);
+        instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        free(vend.regDesloc);
+      }
       else{
         genNodeCodeBoolCompare(nodo, tabela);
       }
@@ -442,9 +478,9 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
       if(nodo->valor_lexico.tipo_literal == TL_BOOL){ //Literal
         ILOC_INST *instruction = malloc(sizeof(ILOC_INST));
         if(nodo->valor_lexico.valTokBool == 0)
-          sprintf(buffer, "jumpI %s", nodo->bexpHatt.lf);
+          sprintf(buffer, "jumpI -> %s", nodo->bexpHatt.lf);
         else
-          sprintf(buffer, "jumpI %s", nodo->bexpHatt.lt);
+          sprintf(buffer, "jumpI -> %s", nodo->bexpHatt.lt);
 
         instruction->inst = strdup(buffer);
         nodo->instructionList = malloc(sizeof(ILOC_INST_LIST));
@@ -456,31 +492,12 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
         nodo->IlocRegName = newRegName();
         ILOC_INST *instruction;
 
-        if(vend.isAbsolute){
-          sprintf(buffer, "loadAI %s, %d => %s", (vend.isGlobal) ? "rbss" : "rfp", vend.absoluteDesloc, nodo->IlocRegName);
-          instruction = malloc(sizeof(ILOC_INST));
-          instruction->inst = strdup(buffer);
-          nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-        }
-        else{
-          nodo->instructionList = vend.regDeslocCalc;
+        sprintf(buffer, "loadAI %s, %d => %s", (vend.isGlobal) ? "rbss" : "rfp", vend.absoluteDesloc, nodo->IlocRegName);
+        instruction = malloc(sizeof(ILOC_INST));
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
 
-          char *auxR = newRegName();
-
-          sprintf(buffer, "add %s, %s => %s", (vend.isGlobal) ? "rbss" : "rfp", vend.regDesloc, auxR);
-          instruction = malloc(sizeof(ILOC_INST));
-          instruction->inst = strdup(buffer);
-          nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-
-          sprintf(buffer, "load %s => %s", auxR, nodo->IlocRegName);
-          instruction = malloc(sizeof(ILOC_INST));
-          instruction->inst = strdup(buffer);
-          nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-
-          free(auxR);
-        }
-
-        sprintf(buffer, "cbr %s => %s, %s", nodo->IlocRegName, nodo->bexpHatt.lt, nodo->bexpHatt.lf);
+        sprintf(buffer, "cbr %s -> %s, %s", nodo->IlocRegName, nodo->bexpHatt.lt, nodo->bexpHatt.lf);
         instruction = malloc(sizeof(ILOC_INST));
         instruction->inst = strdup(buffer);
         nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
