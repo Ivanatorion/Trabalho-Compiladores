@@ -1,10 +1,10 @@
-all: bindir etapa5
+all: bindir etapa6
 
-bindir: 
+bindir:
 	mkdir -p bin
 
-etapa5: bin/lex.yy.o bin/main.o bin/parser.tab.o bin/arvore.o bin/tabela.o bin/iloc.o
-	gcc -o etapa5 bin/*.o -lfl
+etapa6: bin/lex.yy.o bin/main.o bin/parser.tab.o bin/arvore.o bin/tabela.o bin/iloc.o bin/labeltable.o
+	gcc -o etapa6 bin/*.o -lfl
 
 lex.yy.c: scanner.l
 	flex scanner.l
@@ -27,11 +27,14 @@ bin/tabela.o: src/tabela.c include/defines.h
 bin/iloc.o: src/iloc.c include/defines.h
 	gcc -o bin/iloc.o -c src/iloc.c -Wall
 
+bin/labeltable.o: src/labeltable.c include/defines.h
+	gcc -o bin/labeltable.o -c src/labeltable.c -Wall
+
 bin/main.o: main.c
 	gcc -o bin/main.o -c main.c -Wall
 
 clean:
-	rm -f etapa5 lex.yy.c main.o
+	rm -f etapa6 lex.yy.c main.o
 	rm -rf bin/
 	rm -f parser.tab.c parser.tab.h
 	rm -f e3.csv

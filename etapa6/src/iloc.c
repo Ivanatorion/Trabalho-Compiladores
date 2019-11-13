@@ -1,5 +1,6 @@
 #include "../include/iloc.h"
 #include "../include/defines.h"
+#include "../include/labeltable.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -381,9 +382,14 @@ void genNodeCodeWhile(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
 
 void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
   char buffer[128];
+  int isFunction = 0; //Indica se o "nodo" eh funcao
 
   if(nodo == NULL || nodo->instructionList != NULL)
     return;
+
+  if(nodo->valor_lexico.tipo_literal == TL_NONE){
+    printf("%s\n", nodo->valor_lexico.valTokStr);
+  }
 
   if(nodo->tipo == TL_BOOL){
     if(nodo->nFilhosMax == 3){
@@ -643,24 +649,35 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
     }
   }
   else{
-    for(int i = 0; i < nodo->nFilhosMax; i++){
-      genNodeCode(nodo->filhos[i], tabela);
-      if(nodo->filhos[i] != NULL)
-        nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[i]->instructionList);
+    S_INFO sinfo;
+    consulta_tabela(tabela, nodo->valor_lexico.valTokStr, &sinfo);
+
+    if(sinfo.tipoIdentificador == TID_FUNC)
+      isFunction = 1;
+
+    if(isFunction){
+      for(int i = 0; i < nodo->nFilhosMax; i++){
+        genNodeCode(nodo->filhos[i], tabela);
+        if(nodo->filhos[i] != NULL)
+          nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[i]->instructionList);
+      }
     }
   }
 
-  if(nodo->filhos[nodo->nFilhosMax - 1] != NULL){
+  if(!isFunction && nodo->filhos[nodo->nFilhosMax - 1] != NULL){
     genNodeCode(nodo->filhos[nodo->nFilhosMax - 1], tabela);
     nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[nodo->nFilhosMax - 1]->instructionList);
   }
 
 }
 
-ILOC_INST_LIST* genFirstInstructions(){
+ILOC_INST_LIST* genFirstInstructions(T_SIMBOLO* tabela){
   char buffer[128];
   ILOC_INST_LIST* firstInstructions = malloc(sizeof(ILOC_INST_LIST));
   ILOC_INST* instruction;
+
+  while(tabela->ant != NULL)
+    tabela = tabela->ant;
 
   instruction = malloc(sizeof(ILOC_INST));
   sprintf(buffer, "loadI 0 => rbss");
@@ -669,7 +686,7 @@ ILOC_INST_LIST* genFirstInstructions(){
   firstInstructions->prox = NULL;
 
   instruction = malloc(sizeof(ILOC_INST));
-  sprintf(buffer, "loadI 20000 => rfp");
+  sprintf(buffer, "loadI %d => rfp", (tabela == NULL) ? 1024 : tabela->accDesloc);
   instruction->inst = strdup(buffer);
   firstInstructions = addInstructionToList(firstInstructions, instruction);
 
@@ -679,7 +696,7 @@ ILOC_INST_LIST* genFirstInstructions(){
 void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   genNodeCode(arvore, tabela);
 
-  ILOC_INST_LIST *outputList = genFirstInstructions();
+  ILOC_INST_LIST *outputList = genFirstInstructions(tabela);
 
   if(arvore != NULL){
     arvore->instructionList = concatInstructionLists(outputList, arvore->instructionList);
