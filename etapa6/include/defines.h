@@ -8,6 +8,8 @@
 //Mas o grupo achou interessante adicionar
 #define ADDITIONAL_SEMANTIC_TESTS 0
 
+#define STACK_FRAME_TAM_FIX 20
+
 #define TT_PR 0
 #define TT_CE 1
 #define TT_OC 2

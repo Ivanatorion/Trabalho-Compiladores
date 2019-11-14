@@ -54,6 +54,9 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
   if(tipoFuncaoT.tipoPrim == TL_NONE){
     tabela->prox->accDesloc = tabela->accDesloc;
   }
+  else{
+    tabela->prox->accDesloc = STACK_FRAME_TAM_FIX;
+  }
 
   //Insere as entradas iniciais
   tabela = tabela->prox;
@@ -219,7 +222,8 @@ int insere_tabela(T_SIMBOLO* tabela, S_INFO info, NODO_ARVORE* dimensions){
     info.tamanho = info.tamanho * auxDL->dim;
     auxDL = auxDL->prox;
   }
-  tabela->accDesloc = tabela->accDesloc + info.tamanho;
+  if(info.tipoIdentificador != TID_FUNC && info.natureza == NATUREZA_IDENTIFICADOR)
+    tabela->accDesloc = tabela->accDesloc + info.tamanho;
 
   S_INFO* entrada = (S_INFO*) malloc(sizeof(S_INFO));
   *entrada = info;

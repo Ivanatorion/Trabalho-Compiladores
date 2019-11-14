@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DESLOC_PRINT 20
+LABEL_TABLE *label_table = NULL;
 
 typedef struct var_end{
   int isGlobal;
@@ -387,10 +387,6 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
   if(nodo == NULL || nodo->instructionList != NULL)
     return;
 
-  if(nodo->valor_lexico.tipo_literal == TL_NONE){
-    printf("%s\n", nodo->valor_lexico.valTokStr);
-  }
-
   if(nodo->tipo == TL_BOOL){
     if(nodo->nFilhosMax == 3){
       if(!strcmp(nodo->valor_lexico.valTokStr, "=")){
@@ -553,6 +549,71 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
         nodo->instructionList->prox = NULL;
       }
     }
+    else{ //Chamada de funcao
+      S_INFO sInfo;
+      consulta_tabela(tabela, nodo->valor_lexico.valTokStr, &sInfo);
+
+      //FP
+      instruction = malloc(sizeof(ILOC_INST));
+      sprintf(buffer, "storeAI rfp => rsp, 0");
+      instruction->inst = strdup(buffer);
+      nodo->instructionList = malloc(sizeof(ILOC_INST_LIST));
+      nodo->instructionList->instruction = instruction;
+      nodo->instructionList->prox = NULL;
+
+      //PC
+      instruction = malloc(sizeof(ILOC_INST));
+      sprintf(buffer, "storeAI rpc => rsp, 4");
+      instruction->inst = strdup(buffer);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+      //Argumentos
+      NODO_ARVORE* params = nodo->filhos[0];
+      if(params != NULL){
+        genNodeCode(params, tabela);
+        nodo->instructionList = concatInstructionLists(nodo->instructionList, params->instructionList);
+      }
+      int spDesloc = STACK_FRAME_TAM_FIX;
+      while(params != NULL){
+        instruction = malloc(sizeof(ILOC_INST));
+        sprintf(buffer, "storeAI %s => rsp, %d", params->IlocRegName, spDesloc);
+        instruction->inst = strdup(buffer);
+        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+        spDesloc = spDesloc + 4;
+        params = params->filhos[0];
+      }
+
+      //Move frame
+      instruction = malloc(sizeof(ILOC_INST));
+      sprintf(buffer, "i2i rsp => rfp");
+      instruction->inst = strdup(buffer);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+      instruction = malloc(sizeof(ILOC_INST));
+      sprintf(buffer, "addI rsp, %d => rsp", STACK_FRAME_TAM_FIX + sInfo.nArgs * 4);
+      instruction->inst = strdup(buffer);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+      //Jump
+      if(label_table == NULL)
+        label_table = make_label_table();
+
+      char* fLabel = consulta_label_table(label_table, nodo->valor_lexico.valTokStr);
+      if(fLabel == NULL){
+        fLabel = newLabelName();
+        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fLabel);
+        sprintf(buffer, "jumpI -> %s", fLabel);
+        free(fLabel);
+      }
+      else{
+        sprintf(buffer, "jumpI -> %s", fLabel);
+      }
+
+      instruction = malloc(sizeof(ILOC_INST));
+      instruction->inst = strdup(buffer);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+    }
   }
   else if(nodo->tipo == TL_NONE){
     if(!strcmp(nodo->valor_lexico.valTokStr, "if")){
@@ -656,10 +717,40 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
       isFunction = 1;
 
     if(isFunction){
-      for(int i = 0; i < nodo->nFilhosMax; i++){
-        genNodeCode(nodo->filhos[i], tabela);
-        if(nodo->filhos[i] != NULL)
-          nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[i]->instructionList);
+      if(label_table == NULL)
+        label_table = make_label_table();
+
+      char* fLabel = consulta_label_table(label_table, nodo->valor_lexico.valTokStr);
+
+      if(fLabel == NULL){
+        fLabel = newLabelName();
+        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fLabel);
+        sprintf(buffer, "%s: nop", fLabel);
+        free(fLabel);
+      }
+      else{
+        sprintf(buffer, "%s: nop", fLabel);
+      }
+
+      ILOC_INST* funcInit = malloc(sizeof(ILOC_INST));
+
+      funcInit->inst = strdup(buffer);
+      nodo->instructionList = malloc(sizeof(ILOC_INST_LIST));
+      nodo->instructionList->instruction = funcInit;
+      nodo->instructionList->prox = NULL;
+
+      //Epilogo
+
+      //Codigo
+      genNodeCode(nodo->filhos[0], tabela);
+      nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[0]->instructionList);
+
+      //Prologo
+
+      //Proximas Funcoes
+      if(nodo->filhos[1] != NULL){
+        genNodeCode(nodo->filhos[1], tabela);
+        nodo->instructionList = concatInstructionLists(nodo->instructionList, nodo->filhos[1]->instructionList);
       }
     }
   }
@@ -673,6 +764,16 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
 
 ILOC_INST_LIST* genFirstInstructions(T_SIMBOLO* tabela){
   char buffer[128];
+
+  char* main_label = consulta_label_table(label_table, "main");
+
+  S_INFO sInfo;
+  if(tabela != NULL)
+    consulta_tabela(tabela, "main", &sInfo);
+
+  if(main_label == NULL)
+    return NULL;
+
   ILOC_INST_LIST* firstInstructions = malloc(sizeof(ILOC_INST_LIST));
   ILOC_INST* instruction;
 
@@ -690,6 +791,41 @@ ILOC_INST_LIST* genFirstInstructions(T_SIMBOLO* tabela){
   instruction->inst = strdup(buffer);
   firstInstructions = addInstructionToList(firstInstructions, instruction);
 
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "loadI %d => rsp", (tabela == NULL) ? 1024 : tabela->accDesloc + STACK_FRAME_TAM_FIX + sInfo.nArgs * 4);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "storeAI rfp => rsp, 0");
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "storeAI rpc => rsp, 4");
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "i2i rsp => rfp");
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "addI rsp, %d => rsp", STACK_FRAME_TAM_FIX + sInfo.nArgs * 4);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "jumpI -> %s", main_label);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "hlt");
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
   return firstInstructions;
 }
 
@@ -698,18 +834,23 @@ void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
   ILOC_INST_LIST *outputList = genFirstInstructions(tabela);
 
-  if(arvore != NULL){
-    arvore->instructionList = concatInstructionLists(outputList, arvore->instructionList);
-    outputList = arvore->instructionList;
+  if(outputList == NULL)
+    printf("Erro: Funcao \"main\" nao declarada\n");
+  else{
+    if(arvore != NULL){
+      arvore->instructionList = concatInstructionLists(outputList, arvore->instructionList);
+      outputList = arvore->instructionList;
+    }
+
+    if(DEBUG_MODE){
+      FILE *fp = fopen("saida.iloc", "w");
+      printInstructionList(fp, outputList);
+      fclose(fp);
+
+      printf("Codigo Gerado:\n\n");
+    }
+    printInstructionList(stdout, outputList);
   }
 
-  if(DEBUG_MODE){
-    FILE *fp = fopen("saida.iloc", "w");
-    printInstructionList(fp, outputList);
-    fclose(fp);
-
-    printf("Codigo Gerado:\n\n");
-  }
-
-  printInstructionList(stdout, outputList);
+  free_label_table(label_table);
 }
