@@ -2,7 +2,7 @@
 #include "naturezas.h"
 
 //Mudar para "0" antes de entregar
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 //Testes semanticos adicionais que nao estao na especificacao da E4
 //Mas o grupo achou interessante adicionar

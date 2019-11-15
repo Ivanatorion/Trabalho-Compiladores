@@ -9,6 +9,8 @@
 #define ADDITIONAL_SEMANTIC_TESTS 0
 
 #define STACK_FRAME_TAM_FIX 20
+#define RET_VAL_FRAME_DESLOC 8
+#define PC_RETURN_ADD 3
 
 #define TT_PR 0
 #define TT_CE 1

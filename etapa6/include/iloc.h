@@ -4,6 +4,9 @@
 #include "../include/arvore.h"
 #include "../include/tabela.h"
 
+char* newLabelName();
+char* newRegName();
+
 //Gera o arquivo "saida.iloc"
 void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela);
 

@@ -37,7 +37,7 @@ LABEL_TABLE* make_label_table(){
   return novaTabela;
 }
 
-int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* function_label){
+int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* function_label, int accDesloc){
 
   if(label_table->nEntradas == label_table->nEntradasMax){
     //Resize
@@ -70,8 +70,10 @@ int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* func
   int posicao = hashLT(function_name) % label_table->nEntradasMax;
 
   while(label_table->entradas[posicao] != NULL){
-    if(!strcmp(label_table->entradas[posicao]->key, function_name))
+    if(!strcmp(label_table->entradas[posicao]->key, function_name)){
+      label_table->entradas[posicao]->accDesloc = accDesloc;
       return -1;
+    }
     posicao++;
     if(posicao == label_table->nEntradasMax)
       posicao = 0;
@@ -81,6 +83,7 @@ int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* func
 
   entrada->key = strdup(function_name);
   entrada->value = strdup(function_label);
+  entrada->accDesloc = accDesloc;
 
   label_table->entradas[posicao] = entrada;
 
@@ -89,7 +92,7 @@ int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* func
   return 0;
 }
 
-char* consulta_label_table(LABEL_TABLE* label_table, char* chave){
+LABEL_TABLE_ENTRY* consulta_label_table(LABEL_TABLE* label_table, char* chave){
   int posicao = hashLT(chave) % label_table->nEntradasMax;
   int verificados = 0;
 
@@ -97,7 +100,7 @@ char* consulta_label_table(LABEL_TABLE* label_table, char* chave){
     verificados++;
 
     if(!strcmp(chave, label_table->entradas[posicao]->key))
-      return label_table->entradas[posicao]->value;
+      return label_table->entradas[posicao];
 
     posicao++;
     if(posicao == label_table->nEntradasMax)
@@ -134,7 +137,7 @@ void print_label_table(LABEL_TABLE* label_table){
       printf("\033[0;31mNULL\n\033[0m");
     }
     else{
-      printf("%d) %s -> %s\n", i, label_table->entradas[i]->key, label_table->entradas[i]->value);
+      printf("%d) %s -> %s (%d Frame size)\n", i, label_table->entradas[i]->key, label_table->entradas[i]->value, label_table->entradas[i]->accDesloc);
     }
   }
   printf("\n");

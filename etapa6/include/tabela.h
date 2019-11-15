@@ -51,7 +51,8 @@ T_SIMBOLO* make_tabela();
 
 void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT);
 
-void popEscopo(T_SIMBOLO* tabela);
+//Retorna o accDesloc da tabela
+int popEscopo(T_SIMBOLO* tabela);
 
 void free_tabela(T_SIMBOLO* tabela);
 

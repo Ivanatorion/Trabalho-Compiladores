@@ -5,6 +5,7 @@
 #include "include/defines.h"
 #include "include/arvore.h"
 #include "include/tabela.h"
+#include "include/labeltable.h"
 #include "include/iloc.h"
 
 int yylex(void);
@@ -24,6 +25,11 @@ ARG_LIST* listaArgsNovoEscopo;
 TIPO_COMPOSTO tipoNovoEscopo;
 
 T_SIMBOLO* tabelaSimbolos = NULL;
+
+LABEL_TABLE* label_table = NULL;
+void addLabTab(char* fName);
+
+int lastFuncDesloc = 0;
 
 struct valLex DUMB_VALEX;
 
@@ -196,7 +202,7 @@ primType: TK_PR_INT {$$ = (TIPO_COMPOSTO) {TL_INT, 0, 0};}
 | TK_PR_STRING {$$ = (TIPO_COMPOSTO) {TL_STRING, 0, 0};}
 | TK_PR_FLOAT {$$ = (TIPO_COMPOSTO) {TL_FLOAT, 0, 0};};
 
-declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4, NULL);} blocoComandoFun {$$ = createNode($2, 2); addFilho($$, $8);};
+declFunc: staticType TK_IDENTIFICADOR '(' listaParams {listaArgsNovoEscopo = $4; tipoNovoEscopo = $1;} ')' {addSimbolo($2, $1, TID_FUNC, $4, NULL);} blocoComandoFun {addLabTab($2.valTokStr); $$ = createNode($2, 2); addFilho($$, $8);};
 
 listaParams: parametro {$$ = $1; $$->prox = NULL;}
 |            parametro ',' listaParams {$$ = $1; $$->prox = $3;}
@@ -205,7 +211,7 @@ listaParams: parametro {$$ = $1; $$->prox = NULL;}
 parametro: TK_PR_CONST primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $2; $$->tipoArg.isConst = 1; $$->arg = strdup($3.valTokStr); $$->linhaArg = $3.line_number; free($3.valTokStr);}
 |          primType TK_IDENTIFICADOR {$$ = malloc(sizeof(ARG_LIST)); $$->tipoArg = $1; $$->arg = strdup($2.valTokStr); $$->linhaArg = $2.line_number; free($2.valTokStr);} ;
 
-blocoComandoFun: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); genNodeCode($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
+blocoComandoFun: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = $3; print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); genNodeCode($$, tabelaSimbolos); lastFuncDesloc = popEscopo(tabelaSimbolos);} ;
 blocoComando: '{' {pushEscopo(tabelaSimbolos, listaArgsNovoEscopo, tipoNovoEscopo); listaArgsNovoEscopo = NULL; tipoNovoEscopo.tipoPrim = TL_NONE;} listaComandos '}' {$$ = createNode(DUMB_VALEX, 1); addFilho($$, $3); $$->valor_lexico.valTokStr = strdup("{}"); print_tabela(tabelaSimbolos); infere_tipos($$, NULL, tabelaSimbolos); genNodeCode($$, tabelaSimbolos); popEscopo(tabelaSimbolos);} ;
 
 listaComandos: comando listaComandos {if($$ != NULL) {$$ = $1; addFilho($$, $2);} else $$ = $2;}
@@ -342,6 +348,7 @@ comandoFuncExpr: TK_IDENTIFICADOR '(' listaArgs ')' {$$ = createNode($1, 2); add
 void yyerror (char const *s) {
   printf("Linha %d:\n", get_line_number());
   printf("---> %s\n", s);
+  exit(0);
 }
 
 void genIlocCode(NODO_ARVORE* head){
@@ -378,6 +385,15 @@ void exporta(void *head) {
   fclose(fp);
 
   genIlocCode((NODO_ARVORE*) head);
+}
+
+void addLabTab(char* fName){
+  if(label_table == NULL)
+    label_table = make_label_table();
+
+  char *lb = newLabelName();
+  insere_label_table(label_table, fName, lb, lastFuncDesloc);
+  free(lb);
 }
 
 void libera(void *head) {

@@ -8,6 +8,7 @@
 typedef struct lbtb_entry{
   char *key;
   char *value;
+  int accDesloc;
 } LABEL_TABLE_ENTRY;
 
 typedef struct lbtb{
@@ -22,10 +23,10 @@ LABEL_TABLE* make_label_table();
 void free_label_table(LABEL_TABLE* label_table);
 
 //Retorna codigos de erro
-int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* function_label);
+int insere_label_table(LABEL_TABLE* label_table, char* function_name, char* function_label, int accDesloc);
 
 //Retorna NULL se nao achar
-char* consulta_label_table(LABEL_TABLE* label_table, char* chave);
+LABEL_TABLE_ENTRY* consulta_label_table(LABEL_TABLE* label_table, char* chave);
 
 void print_label_table(LABEL_TABLE* label_table);
 

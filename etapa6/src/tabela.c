@@ -74,7 +74,7 @@ void pushEscopo(T_SIMBOLO* tabela, ARG_LIST* iniciais, TIPO_COMPOSTO tipoFuncaoT
   }
 }
 
-void popEscopo(T_SIMBOLO* tabela){
+int popEscopo(T_SIMBOLO* tabela){
   while(tabela->prox != NULL)
     tabela = tabela->prox;
 
@@ -82,7 +82,11 @@ void popEscopo(T_SIMBOLO* tabela){
     tabela->ant->accDesloc = tabela->accDesloc;
   }
 
+  int retorno = tabela->accDesloc;
+
   free_tabela(tabela);
+
+  return retorno;
 }
 
 int getTipoUltimaFuncao(T_SIMBOLO* tabela){

@@ -107,7 +107,6 @@ VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
 
     result.regDesloc = newRegName();
     char *auxR;
-    int acDim = 1;
 
     instruction = malloc(sizeof(ILOC_INST));
     sprintf(buffer, "loadI 0 => %s", result.regDesloc);
@@ -119,7 +118,11 @@ VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
     genNodeCode(nodo, tabela);
     result.regDeslocCalc = concatInstructionLists(result.regDeslocCalc, nodo->instructionList);
 
+    int acDim;
+
     while(nodo != NULL){
+      acDim = sInfo.dimList->dim;
+
       auxR = result.regDesloc;
       result.regDesloc = newRegName();
       instruction = malloc(sizeof(ILOC_INST));
@@ -136,7 +139,6 @@ VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
       result.regDeslocCalc = addInstructionToList(result.regDeslocCalc, instruction);
       free(auxR);
 
-      acDim = sInfo.dimList->dim*acDim;
       sInfo.dimList = sInfo.dimList->prox;
       nodo = nodo->filhos[nodo->nFilhosMax-1];
     }
@@ -458,8 +460,8 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
     }
     else if(nodo->nFilhosMax == 2){ //UnOp
       if(!strcmp(nodo->valor_lexico.valTokStr, "!")){
-        nodo->filhos[0]->bexpHatt.lf = strdup(nodo->bexpHatt.lt);
-        nodo->filhos[0]->bexpHatt.lt = strdup(nodo->bexpHatt.lf);
+        nodo->filhos[0]->bexpHatt.lf = nodo->bexpHatt.lt;
+        nodo->filhos[0]->bexpHatt.lt = nodo->bexpHatt.lf;
         genNodeCode(nodo->filhos[0], tabela);
         nodo->instructionList = nodo->filhos[0]->instructionList;
       }
