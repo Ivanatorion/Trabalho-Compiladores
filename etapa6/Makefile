@@ -1,9 +1,9 @@
-all: bindir etapa6
+all: bin/ etapa6
 
-bindir:
+bin/:
 	mkdir -p bin
 
-etapa6: bin/lex.yy.o bin/main.o bin/parser.tab.o bin/arvore.o bin/tabela.o bin/iloc.o bin/labeltable.o
+etapa6: bin/lex.yy.o bin/main.o bin/parser.tab.o bin/arvore.o bin/tabela.o bin/iloc.o bin/labeltable.o bin/optimizer.o
 	gcc -o etapa6 bin/*.o -lfl
 
 lex.yy.c: scanner.l
@@ -29,6 +29,9 @@ bin/iloc.o: src/iloc.c include/defines.h
 
 bin/labeltable.o: src/labeltable.c include/defines.h
 	gcc -o bin/labeltable.o -c src/labeltable.c -Wall
+
+bin/optimizer.o: src/optimizer.c include/optimizer.h
+	gcc -o bin/optimizer.o -c src/optimizer.c -Wall
 
 bin/main.o: main.c
 	gcc -o bin/main.o -c main.c -Wall

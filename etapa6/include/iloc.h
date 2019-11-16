@@ -1,8 +1,8 @@
 #ifndef ILOC_HEADER_H
 #define ILOC_HEADER_H
 
-#include "../include/arvore.h"
-#include "../include/tabela.h"
+#include "arvore.h"
+#include "tabela.h"
 
 char* newLabelName();
 char* newRegName();

@@ -1,6 +1,7 @@
 #include "../include/iloc.h"
 #include "../include/defines.h"
 #include "../include/labeltable.h"
+#include "../include/optimizer.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -613,7 +614,6 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
 
         spDesloc = spDesloc + 4;
         params = params->filhos[params->nFilhosMax - 1];
-        printf("spd: %d\n", spDesloc);
       }
 
       //FP
@@ -975,4 +975,11 @@ void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
   }
 
   free_label_table(label_table);
+
+  if(DEBUG_MODE){
+    optimize(outputList, 0);
+    FILE *fp = fopen("saidaOpt.iloc", "w");
+    printInstructionList(fp, outputList);
+    fclose(fp);
+  }
 }
