@@ -42,3 +42,4 @@ clean:
 	rm -f parser.tab.c parser.tab.h
 	rm -f e3.csv
 	rm -f saida.iloc
+	rm -f saidaOpt.iloc

@@ -107,7 +107,7 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 \'.. { RET_TOK( TOKEN_ERRO ); }
 \".*\" { setYyVal(TT_LIT, TL_STRING); RET_TOK(TK_LIT_STRING); }
 
-{litInt}.?{identificador} { RET_TOK(TOKEN_ERRO); }
+{litInt}{identificador} { RET_TOK(TOKEN_ERRO); }
 {litFloat}{identificador} { RET_TOK(TOKEN_ERRO); }
 
 {identificador} { setYyVal(TT_ID, TL_NONE); RET_TOK(TK_IDENTIFICADOR); }

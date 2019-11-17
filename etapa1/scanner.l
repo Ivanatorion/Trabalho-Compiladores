@@ -67,7 +67,7 @@ identificador [a-zA-Z_][a-zA-Z0-9_]*
 \'.*\' { RET_TOK( TOKEN_ERRO ); }
 \".*\" { RET_TOK(TK_LIT_STRING); }
 
-{litInt}.?{identificador} { RET_TOK(TOKEN_ERRO); }
+{litInt}{identificador} { RET_TOK(TOKEN_ERRO); }
 {litFloat}{identificador} { RET_TOK(TOKEN_ERRO); }
 
 {identificador} { RET_TOK(TK_IDENTIFICADOR); }
