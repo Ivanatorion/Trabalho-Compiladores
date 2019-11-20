@@ -17,6 +17,13 @@ typedef struct var_end{
   ILOC_INST_LIST *regDeslocCalc;
 } VAR_END;
 
+typedef struct rlist{
+  struct rlist *prox;
+  struct rlist *ant;
+
+  char *reg;
+} REG_LIST;
+
 char* newRegName(){
   static int nextReg = 1;
 
@@ -35,13 +42,6 @@ char* newLabelName(){
   nextLabel++;
 
   return strdup(labelName);
-}
-
-void printInstructionList(FILE *out, ILOC_INST_LIST *instList){
-  while(instList != NULL){
-    fprintf(out, "%s\n", instList->instruction->inst);
-    instList = instList->prox;
-  }
 }
 
 ILOC_INST_LIST* addInstructionToList(ILOC_INST_LIST *list, ILOC_INST *inst){
@@ -82,6 +82,150 @@ ILOC_INST_LIST* concatInstructionLists(ILOC_INST_LIST *l1, ILOC_INST_LIST *l2){
   l1->prox = l2;
 
   return result;
+}
+
+void printInstructionList(FILE *out, ILOC_INST_LIST *instList){
+  while(instList != NULL){
+    fprintf(out, "%s\n", instList->instruction->inst);
+    instList = instList->prox;
+  }
+}
+
+REG_LIST* addReg(REG_LIST* rList, char* reg){
+  const char blackList[4][10] = {"rfp", "rsp", "rpc", "rbss"};
+
+  if(reg == NULL)
+    return rList;
+
+  printf("Reg: %s\n", reg);
+
+  int blackListed = 0;
+  for(int i = 0; i < 4; i++)
+    if(!strcmp(reg, blackList[i]))
+      blackListed = 1;
+
+  if(blackListed)
+    return rList;
+
+  if(rList == NULL){
+    rList = malloc(sizeof(REG_LIST));
+    rList->prox = NULL;
+    rList->ant = NULL;
+    rList->reg = strdup(reg);
+    return rList;
+  }
+
+  REG_LIST *auxL = rList;
+  while(auxL->prox != NULL)
+    auxL = auxL->prox;
+
+  auxL->prox = malloc(sizeof(REG_LIST));
+  auxL->prox->prox = NULL;
+  auxL->prox->ant = auxL;
+  auxL->prox->reg = strdup(reg);
+  return rList;
+}
+
+void freeRegList(REG_LIST *rList){
+  if(rList == NULL)
+    return;
+
+  REG_LIST *aux;
+
+  do {
+    aux = rList->prox;
+    free(rList->reg);
+    free(rList);
+    rList = aux;
+  } while (rList != NULL);
+}
+
+void genPushCode(ILOC_INST_LIST *iList, REG_LIST *rList){
+  if(rList == NULL){
+    free(iList->instruction->inst);
+    free(iList->instruction);
+
+    iList->instruction = iList->prox->instruction;
+
+    ILOC_INST_LIST *auxIL = iList->prox;
+    iList->prox = iList->prox->prox;
+    free(auxIL);
+
+    return;
+  }
+
+  ILOC_INST_LIST *newL = NULL;
+  ILOC_INST *newInst = NULL;
+
+  char buffer[128];
+  int desloc = 0;
+  while(rList != NULL){
+    newInst = malloc(sizeof(ILOC_INST));
+    sprintf(buffer, "storeAI %s => rsp, %d", rList->reg, desloc);
+    newInst->inst = strdup(buffer);
+    newL = addInstructionToList(newL, newInst);
+    rList = rList->prox;
+    desloc = desloc + 4;
+  }
+  newInst = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "addI rsp, %d => rsp", desloc);
+  newInst->inst = strdup(buffer);
+  newL = addInstructionToList(newL, newInst);
+
+  sprintf(iList->instruction->inst, "nop");
+  newL = concatInstructionLists(newL, iList->prox);
+  iList->prox = newL;
+}
+
+void genPushCode(ILOC_INST_LIST *iList, REG_LIST *rList){
+  //Lembrar de nao popar o ultimo adicionado
+
+}
+
+void fixPushPopRegisters(ILOC_INST_LIST *iList){
+  const char regLoadInstructions[5][10] = {"load", "add", "mult", "sub", "div"};
+
+  REG_LIST *rList = NULL;
+
+  ILOC_INST_LIST *cInst = iList;
+
+  while(cInst != NULL){
+    char *instString = cInst->instruction->inst;
+    int addRegToList = 0;
+
+    for(int i = 0; i < 5; i++){
+      if(strstr(instString, regLoadInstructions[i])){
+        addRegToList = 1;
+      }
+    }
+
+    if(addRegToList){
+      char *regToAdd = strstr(instString, "=> ") + 3;
+      rList = addReg(rList, regToAdd);
+    }
+
+    if(!strcmp(instString, PUSH_MARK)){
+      genPushCode(cInst, rList);
+    }
+
+    if(!strcmp(instString, POP_MARK)){
+      genPopCode(cInst, rList);
+    }
+
+    cInst = cInst->prox;
+  }
+
+  /*
+  REG_LIST *auxL = rList;
+
+  printf("Reg List:\n");
+  while(auxL != NULL){
+    printf("%s\n", auxL->reg);
+    auxL = auxL->prox;
+  }
+  */
+
+  freeRegList(rList);
 }
 
 VAR_END getVarEnd(NODO_ARVORE *nodo, T_SIMBOLO* tabela){
@@ -605,6 +749,12 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
         genNodeCode(params, tabela);
         nodo->instructionList = concatInstructionLists(nodo->instructionList, params->instructionList);
       }
+
+      //Push registers mark
+      instruction = malloc(sizeof(ILOC_INST));
+      instruction->inst = strdup(PUSH_MARK);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
       int spDesloc = STACK_FRAME_TAM_FIX;
       while(params != NULL){
         instruction = malloc(sizeof(ILOC_INST));
@@ -662,6 +812,11 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
       instruction = malloc(sizeof(ILOC_INST));
       sprintf(buffer, "loadAI rsp, %d => %s", RET_VAL_FRAME_DESLOC, nodo->IlocRegName);
       instruction->inst = strdup(buffer);
+      nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
+
+      //Pop registers mark
+      instruction = malloc(sizeof(ILOC_INST));
+      instruction->inst = strdup(POP_MARK);
       nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
     }
   }
@@ -801,26 +956,6 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
       sprintf(buffer, "addI rsp, %d => rsp", consulta_label_table(label_table, nodo->valor_lexico.valTokStr)->accDesloc);
       instruction->inst = strdup(buffer);
       nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-      /*
-      int spDesloc = 0;
-      char *rAux;
-      for(int i = 0; i < sinfo.nArgs; i++){
-        rAux = newRegName();
-
-        instruction = malloc(sizeof(ILOC_INST));
-        sprintf(buffer, "loadAI rfp, %d => %s", spDesloc, rAux);
-        instruction->inst = strdup(buffer);
-        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-
-        instruction = malloc(sizeof(ILOC_INST));
-        sprintf(buffer, "storeAI %s => rfp, %d", rAux, spDesloc + STACK_FRAME_TAM_FIX);
-        instruction->inst = strdup(buffer);
-        nodo->instructionList = addInstructionToList(nodo->instructionList, instruction);
-
-        free(rAux);
-        spDesloc = spDesloc + 4;
-      }
-      */
 
       //Codigo
       genNodeCode(nodo->filhos[0], tabela);
@@ -960,6 +1095,8 @@ void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
       arvore->instructionList = concatInstructionLists(outputList, arvore->instructionList);
       outputList = arvore->instructionList;
     }
+
+    fixPushPopRegisters(outputList);
 
     if(DEBUG_MODE){
       FILE *fp = fopen("saida.iloc", "w");

@@ -11,6 +11,8 @@
 #define STACK_FRAME_TAM_FIX 20
 #define RET_VAL_FRAME_DESLOC 8
 #define PC_RETURN_ADD 3
+#define PUSH_MARK "EMPILHA REGS"
+#define POP_MARK "DESEMPILHA REGS"
 
 #define TT_PR 0
 #define TT_CE 1

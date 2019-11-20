@@ -31,7 +31,10 @@ int optNop(ILOC_INST_LIST *first, ILOC_INST_LIST *second){
     if(slabel == NULL){
         char buffer[128];
 
-        sprintf(buffer, "%s: %s", flabel, fs);
+        if(flabel != NULL)
+          sprintf(buffer, "%s: %s", flabel, fs);
+        else
+          sprintf(buffer, "%s", fs);
         free(second->instruction->inst);
         free(first->instruction->inst);
         free(second->instruction);
@@ -40,7 +43,7 @@ int optNop(ILOC_INST_LIST *first, ILOC_INST_LIST *second){
         first->prox = second->prox;
         free(second);
 
-        free(flabel);
+        if(flabel != NULL) free(flabel);
         return 1;
     }
 
