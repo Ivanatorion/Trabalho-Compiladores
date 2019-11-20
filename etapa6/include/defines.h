@@ -8,6 +8,7 @@
 //Mas o grupo achou interessante adicionar
 #define ADDITIONAL_SEMANTIC_TESTS 0
 
+#define END_RBSS 4
 #define STACK_FRAME_TAM_FIX 20
 #define RET_VAL_FRAME_DESLOC 8
 #define PC_RETURN_ADD 3

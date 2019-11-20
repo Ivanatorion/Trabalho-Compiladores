@@ -97,8 +97,6 @@ REG_LIST* addReg(REG_LIST* rList, char* reg){
   if(reg == NULL)
     return rList;
 
-  printf("Reg: %s\n", reg);
-
   int blackListed = 0;
   for(int i = 0; i < 4; i++)
     if(!strcmp(reg, blackList[i]))
@@ -116,8 +114,14 @@ REG_LIST* addReg(REG_LIST* rList, char* reg){
   }
 
   REG_LIST *auxL = rList;
-  while(auxL->prox != NULL)
+  while(auxL->prox != NULL){
+    if(!strcmp(reg, auxL->reg))
+      return rList;
     auxL = auxL->prox;
+  }
+
+  if(!strcmp(reg, auxL->reg))
+    return rList;
 
   auxL->prox = malloc(sizeof(REG_LIST));
   auxL->prox->prox = NULL;
@@ -177,9 +181,39 @@ void genPushCode(ILOC_INST_LIST *iList, REG_LIST *rList){
   iList->prox = newL;
 }
 
-void genPushCode(ILOC_INST_LIST *iList, REG_LIST *rList){
-  //Lembrar de nao popar o ultimo adicionado
+void genPopCode(ILOC_INST_LIST *iList, REG_LIST *rList){
+  if(rList == NULL){
+    free(iList->instruction->inst);
+    free(iList->instruction);
 
+    iList->instruction = iList->prox->instruction;
+
+    ILOC_INST_LIST *auxIL = iList->prox;
+    iList->prox = iList->prox->prox;
+    free(auxIL);
+
+    return;
+  }
+
+  ILOC_INST_LIST *newL = NULL;
+  ILOC_INST *newInst = NULL;
+
+  char buffer[128];
+  int desloc = 0;
+  while(rList->prox != NULL){
+    newInst = malloc(sizeof(ILOC_INST));
+    sprintf(buffer, "loadAI rsp, %d => %s", desloc, rList->reg);
+    newInst->inst = strdup(buffer);
+    newL = addInstructionToList(newL, newInst);
+    rList = rList->prox;
+    desloc = desloc + 4;
+  }
+
+  sprintf(buffer, "subI rsp, %d => rsp", desloc);
+  free(iList->instruction->inst);
+  iList->instruction->inst = strdup(buffer);
+  newL = concatInstructionLists(newL, iList->prox);
+  iList->prox = newL;
 }
 
 void fixPushPopRegisters(ILOC_INST_LIST *iList){
@@ -1040,18 +1074,18 @@ ILOC_INST_LIST* genFirstInstructions(T_SIMBOLO* tabela){
     tabela = tabela->ant;
 
   instruction = malloc(sizeof(ILOC_INST));
-  sprintf(buffer, "loadI 0 => rbss");
+  sprintf(buffer, "loadI %d => rbss", END_RBSS);
   instruction->inst = strdup(buffer);
   firstInstructions->instruction = instruction;
   firstInstructions->prox = NULL;
 
   instruction = malloc(sizeof(ILOC_INST));
-  sprintf(buffer, "loadI %d => rfp", (tabela == NULL) ? 1024 : tabela->accDesloc);
+  sprintf(buffer, "loadI %d => rfp", (tabela == NULL) ? 1024 : tabela->accDesloc + END_RBSS);
   instruction->inst = strdup(buffer);
   firstInstructions = addInstructionToList(firstInstructions, instruction);
 
   instruction = malloc(sizeof(ILOC_INST));
-  sprintf(buffer, "loadI %d => rsp", (tabela == NULL) ? 1024 : tabela->accDesloc + STACK_FRAME_TAM_FIX + sInfo.nArgs * 4);
+  sprintf(buffer, "loadI %d => rsp", (tabela == NULL) ? 1024 : tabela->accDesloc + STACK_FRAME_TAM_FIX + sInfo.nArgs * 4 + END_RBSS);
   instruction->inst = strdup(buffer);
   firstInstructions = addInstructionToList(firstInstructions, instruction);
 
@@ -1074,6 +1108,27 @@ ILOC_INST_LIST* genFirstInstructions(T_SIMBOLO* tabela){
   sprintf(buffer, "jumpI -> %s", main_label);
   instruction->inst = strdup(buffer);
   firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  char *auxR = newRegName();
+  char *auxR2 = newRegName();
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "loadAI rsp, 8 => %s", auxR);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "loadI 0 => %s", auxR2);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  instruction = malloc(sizeof(ILOC_INST));
+  sprintf(buffer, "store %s => %s", auxR, auxR2);
+  instruction->inst = strdup(buffer);
+  firstInstructions = addInstructionToList(firstInstructions, instruction);
+
+  free(auxR);
+  free(auxR2);
 
   instruction = malloc(sizeof(ILOC_INST));
   sprintf(buffer, "halt");
@@ -1108,13 +1163,13 @@ void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
       printf("Codigo Gerado:\n\n");
     }
+    optimize(outputList, 1);
     printInstructionList(stdout, outputList);
   }
 
   free_label_table(label_table);
 
   if(DEBUG_MODE){
-    optimize(outputList, 0);
     FILE *fp = fopen("saidaOpt.iloc", "w");
     printInstructionList(fp, outputList);
     fclose(fp);
