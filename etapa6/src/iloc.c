@@ -216,6 +216,25 @@ void genPopCode(ILOC_INST_LIST *iList, REG_LIST *rList){
   iList->prox = newL;
 }
 
+int isStartFunction(char *instStr){
+  char fname[1000];
+
+  if(strstr(instStr, ":") == NULL)
+    return 0;
+
+  int i = 1;
+  while(instStr[i] != ':'){
+    fname[i-1] = instStr[i];
+    i++;
+  }
+  fname[i-1] = '\0';
+
+  if(consulta_label_table(label_table, fname) == NULL)
+    return 0;
+
+  return 1;
+}
+
 void fixPushPopRegisters(ILOC_INST_LIST *iList){
   const char regLoadInstructions[5][10] = {"load", "add", "mult", "sub", "div"};
 
@@ -228,7 +247,7 @@ void fixPushPopRegisters(ILOC_INST_LIST *iList){
     int addRegToList = 0;
 
     for(int i = 0; i < 5; i++){
-      if(strstr(instString, regLoadInstructions[i])){
+      if(strstr(instString, regLoadInstructions[i]) && strstr(instString, "=>")){
         addRegToList = 1;
       }
     }
@@ -246,18 +265,13 @@ void fixPushPopRegisters(ILOC_INST_LIST *iList){
       genPopCode(cInst, rList);
     }
 
+    if(isStartFunction(instString)){
+      freeRegList(rList);
+      rList = NULL;
+    }
+
     cInst = cInst->prox;
   }
-
-  /*
-  REG_LIST *auxL = rList;
-
-  printf("Reg List:\n");
-  while(auxL != NULL){
-    printf("%s\n", auxL->reg);
-    auxL = auxL->prox;
-  }
-  */
 
   freeRegList(rList);
 }
@@ -824,15 +838,14 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
 
       LABEL_TABLE_ENTRY* fEntry = consulta_label_table(label_table, nodo->valor_lexico.valTokStr);
 
-      char* fLabel;
       if(fEntry == NULL){
-        fLabel = newLabelName();
-        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fLabel, 0);
-        sprintf(buffer, "jumpI -> %s", fLabel);
-        free(fLabel);
+        char fl[1000];
+        sprintf(fl, "L%s", nodo->valor_lexico.valTokStr);
+        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fl, 0);
+        sprintf(buffer, "jumpI -> %s", fl);
       }
       else{
-        fLabel = fEntry->value;
+        char *fLabel = fEntry->value;
         sprintf(buffer, "jumpI -> %s", fLabel);
       }
 
@@ -964,16 +977,14 @@ void genNodeCode(NODO_ARVORE* nodo, T_SIMBOLO* tabela){
 
       LABEL_TABLE_ENTRY* fEntry = consulta_label_table(label_table, nodo->valor_lexico.valTokStr);
 
-      char* fLabel;
-
       if(fEntry == NULL){
-        fLabel = newLabelName();
-        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fLabel, 0);
-        sprintf(buffer, "%s: nop", fLabel);
-        free(fLabel);
+        char fl[1000];
+        sprintf(fl, "L%s", nodo->valor_lexico.valTokStr);
+        insere_label_table(label_table, nodo->valor_lexico.valTokStr, fl, 0);
+        sprintf(buffer, "%s: nop", fl);
       }
       else{
-        fLabel = fEntry->value;
+        char *fLabel = fEntry->value;
         sprintf(buffer, "%s: nop", fLabel);
       }
 
@@ -1163,7 +1174,7 @@ void genSaidaIloc(NODO_ARVORE* arvore, T_SIMBOLO* tabela){
 
       printf("Codigo Gerado:\n\n");
     }
-    optimize(outputList, 1);
+    //optimize(outputList, 1);
     printInstructionList(stdout, outputList);
   }
 

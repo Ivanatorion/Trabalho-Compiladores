@@ -1,0 +1,11 @@
+A ordem dos campos a partir de RFP:
+RPF antigo (Vinculo dinamico) (Deslocamento 0)
+Endereco de retorno (Deslocamento 4)
+Valor retornado (Deslocamento 8)
+Vinculo estatico (Sempre 0) (Deslocamento 12)
+Temporarios (Sempre 0) (Deslocamento 16)
+Parametros formais (Deslocamento 20)
+Variaveis locais (Deslocamento variavel de acordo com numero de parametros)
+
+O estado da maquina salvo pela funcao chamadora esta empilhado antes
+do frame pointer da funcao chamada.

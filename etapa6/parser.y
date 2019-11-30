@@ -391,9 +391,9 @@ void addLabTab(char* fName){
   if(label_table == NULL)
     label_table = make_label_table();
 
-  char *lb = newLabelName();
-  insere_label_table(label_table, fName, lb, lastFuncDesloc);
-  free(lb);
+  char buffer[128];
+  sprintf(buffer, "L%s", fName);
+  insere_label_table(label_table, fName, buffer, lastFuncDesloc);
 }
 
 void libera(void *head) {
